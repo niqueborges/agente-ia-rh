@@ -246,3 +246,12 @@ Em vez de depender apenas de validações manuais, a evolução natural para amb
 ## 🎯 Síntese
 
 O projeto foi estruturado com foco em modularidade, execução local, reprodutibilidade do ambiente e separação clara entre interface, ingestão, recuperação e geração. A arquitetura evita dependência de APIs externas de IA durante a execução e documenta caminhos claros de evolução para um cenário corporativo privado.
+
+---
+
+## 📚 Referências e Créditos
+
+Este projeto teve como ponto de partida o tutorial e materiais disponibilizados no YouTube:
+- **Vídeo de Referência:** [Assistente RAG com Streamlit e LangChain](https://www.youtube.com/watch?v=XqG3RN6VzDw)
+- **Agradecimentos:** Aos autores do conteúdo original que serviu como prova de conceito (PoC) inicial, a partir da qual o projeto foi expandido e refatorado com execução 100% local (Ollama), resolução dinâmica de rede (WSL/Windows), arquitetura modular em pacotes e containerização com Docker.
+
