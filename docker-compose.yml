@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  agente-rh:
+    build: .
+    container_name: assistente_ia_rh
+    ports:
+      - "8501:8501"
+    environment:
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
