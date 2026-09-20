@@ -12,7 +12,17 @@ A aplicação opera **100% localmente e com privacidade total**, garantindo que 
 
 ---
 
-## 🏛️ Arquitetura do Sistema
+## 📖 Evolução do Projeto
+
+O projeto não nasceu como uma versão estática, mas passou por um ciclo real de engenharia e refatoração:
+
+1. **Prova de Conceito Inicial (OpenAI):** O protótipo inicial utilizava APIs da OpenAI (`text-embedding-3-small` e `gpt-4o-mini`) em um script único.
+2. **Transição para IA Local (Ollama):** Diante da dependência de cotas pagas e buscando total privacidade de dados, o pipeline foi adaptado para **Ollama** (`nomic-embed-text` para embeddings e modelos como `mistral:7b`, `qwen2.5-coder` e `qwen3` para geração).
+3. **Modularização e Engenharia de Produção:** O código foi desacoplado em módulos independentes (`rag/` para lógica de negócio e `app.py` estritamente para interface Streamlit), com detecção dinâmica de ambiente de rede (WSL/Docker) e containerização.
+
+---
+
+## 🏛️ Arquitetura do Pipeline RAG
 
 ```mermaid
 flowchart TD
@@ -24,7 +34,7 @@ flowchart TD
     end
 
     subgraph Consulta["2. Consulta e Recuperação RAG"]
-        User(["👤 Colaborador"]) -->|Digita Pergunta| UI["💻 Interface Streamlit"]
+        User(["👤 Colaborador"]) -->|Digita Pergunta| UI["💻 Interface Streamlit (app.py)"]
         UI --> Retriever["🔍 FAISS Retriever (k=3)"]
         FAISS_DB -.->|Busca Semântica| Retriever
         Retriever --> Contexto["📑 Trechos Relevantes"]
@@ -41,29 +51,62 @@ flowchart TD
 
 ---
 
+## 🖥️ Topologia de Execução: Desenvolvimento vs Produção
+
+### Ambiente Real de Desenvolvimento (Windows Host + WSL2)
+
+No cenário de desenvolvimento, o servidor Ollama executa no Windows (aproveitando aceleração de hardware) enquanto a aplicação Python roda no subsistema Linux (WSL2):
+
+```text
+┌──────────────────────────────────────────────┐
+│                Windows Host                  │
+│                                              │
+│               Servidor Ollama                │
+│             http://localhost:11434           │
+└──────────────────────┬───────────────────────┘
+                       │
+             Rede Virtual WSL2 / Gateway
+                       │
+┌──────────────────────▼───────────────────────┐
+│                 WSL2: Ubuntu                 │
+│                                              │
+│  app.py (Streamlit UI)                       │
+│     └── rag/                                 │
+│          ├── ollama_client.py (Host Resolver)│
+│          ├── ingest.py (PyPDF + FAISS)       │
+│          └── chain.py (LangChain LCEL)       │
+└──────────────────────────────────────────────┘
+```
+
+### Arquitetura Alvo em Produção Corporativa
+
+Para um ambiente corporativo real, a aplicação não é exposta diretamente na porta 8501, mas sim protegida por camadas de segurança de rede e identidade:
+
+```text
+[ Colaborador ]
+       │ (HTTPS / VPN Corporativa)
+       ▼
+[ Reverse Proxy / Ingress (Nginx / Traefik) ] ─── [ SSO / OIDC (Microsoft Entra / Okta) ]
+       │
+       ▼
+[ Container Streamlit (app.py + rag) ]
+       ├── [ Banco Vetorial (FAISS / PgVector) ]
+       └── [ Servidor de Inferência Dedicado (Ollama / vLLM com GPU corporativa) ]
+```
+
+---
+
 ## ⚖️ Decisões de Engenharia e Arquitetura
 
 | Decisão Técnica | Implementação | Motivo / Impacto |
 | :--- | :--- | :--- |
+| **Separação UI vs RAG** | `app.py` + pacote `rag/` | Desacopla a camada de apresentação Streamlit da lógica de processamento e recuperação de dados. |
 | **Otimização de Cache** | `@st.cache_resource` | Evita a releitura do PDF e a regeneração de embeddings a cada interação ou re-execução do Streamlit. |
 | **Banco Vetorial em Memória** | `FAISS (faiss-cpu)` | Busca vetorial semântica de altíssima velocidade sem a necessidade de infraestrutura pesada de banco externo. |
 | **Filtro de Relevância ($k=3$)** | `as_retriever(k=3)` | Balanço ideal entre contexto suficiente e economia da janela de contexto da LLM, reduzindo alucinações. |
 | **Baixa Latência Percebida** | `chain.stream()` + `st.write_stream` | Streaming de resposta token a token, entregando feedback imediato ao usuário (baixo Time-To-First-Token). |
-| **Portabilidade de Ambiente** | `obter_url_ollama()` | Detecção dinâmica do host do Ollama, funcionando perfeitamente em Linux nativo, Docker e WSL2 (Windows Gateway). |
-| **Desacoplamento do Pipeline** | LangChain Expression Language (LCEL) | Arquitetura modular que permite trocar o provedor de IA (Ollama / OpenAI / Gemini) sem alterar a interface. |
-
----
-
-## 🌐 Portabilidade: Resolução Dinâmica de Ambiente (WSL & Docker)
-
-Um dos desafios comuns no desenvolvimento de IA local no Windows/Linux é a comunicação entre o subsistema WSL2/Container e o servidor Ollama rodando no Windows Host.
-
-O módulo [`rag/ollama_client.py`](rag/ollama_client.py) implementa um mecanismo de resolução automática em cascata:
-
-1. **Variável Explícita:** Verifica se `OLLAMA_BASE_URL` foi configurado no `.env`.
-2. **Localhost:** Testa conexões em `http://localhost:11434` e `http://127.0.0.1:11434`.
-3. **WSL Gateway Resolver:** Se executado dentro do WSL2, identifica dinamicamente o IP do Host Windows via tabela de roteamento (`ip route | grep default`).
-4. **Fallback Seguro:** Garante que a aplicação inicialize sem falhas silenciosas.
+| **Portabilidade de Ambiente** | `obter_url_ollama()` via socket | Resolução de rede não-bloqueante (0.3s timeout) compatível com Linux nativo, Docker e WSL2. |
+| **Desacoplamento do Pipeline** | LangChain Expression Language (LCEL) | Facilita a substituição transparente de componentes (LLMs, prompts e retrievers). |
 
 ---
 
@@ -112,7 +155,7 @@ ollama pull qwen3:4b
 
 1. **Clone o repositório:**
    ```bash
-   git clone https://github.com/seu-usuario/agente-ia-rh.git
+   git clone https://github.com/niqueborges/agente-ia-rh.git
    cd agente-ia-rh
    ```
 
@@ -160,4 +203,4 @@ Como parte das boas práticas de engenharia de software, as seguintes oportunida
 - [ ] **Índice Persistido em Disco:** Atualmente o FAISS opera em memória durante o ciclo do Streamlit. Uma evolução para larga escala é persistir o índice binário em disco ou utilizar um banco vetorial distribuído (Chroma / Qdrant / PgVector).
 - [ ] **Ingestão Multi-Documento com Filtro de Metadados:** Suportar múltiplos manuais com filtragem por departamento (RH, TI, Financeiro, Jurídico).
 - [ ] **Camada de Autenticação Corporativa (SSO):** Adição de autenticação via OIDC / Microsoft Entra ID para controle de acesso baseado em cargos (RBAC).
-- [ ] **Avaliação Contínua de RAG (RAGAS):** Implementação de métricas de avaliação de fidelidade (faithfulness) e relevância de contexto.
+- [ ] **Avaliação Automatizada de RAG (RAGAS / TruLens):** Implementação de suíte de testes automatizados para avaliar métricas de fidelidade (*faithfulness*) e relevância de contexto (*answer relevancy*).
