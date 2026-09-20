@@ -221,11 +221,28 @@ Acesse a interface no navegador: `http://localhost:8501`.
 
 ---
 
-## 📌 Limitações Conhecidas e Evoluções Futuras
+## 📌 Limitações Conhecidas e Próximos Passos
 
-Como parte das boas práticas de engenharia de software, as seguintes oportunidades de evolução foram mapeadas:
+Como parte das boas práticas de engenharia de software, o escopo atual está delimitado como um protótipo funcional e modular. As seguintes oportunidades de evolução técnica e avaliação sistemática foram mapeadas como próximas fronteiras:
 
-- [ ] **Índice Persistido em Disco:** Atualmente o FAISS opera em memória durante o ciclo do Streamlit. Uma evolução para larga escala é persistir o índice binário em disco ou utilizar um banco vetorial distribuído (Chroma / Qdrant / PgVector).
-- [ ] **Ingestão Multi-Documento com Filtro de Metadados:** Suportar múltiplos manuais com filtragem por departamento (RH, TI, Financeiro, Jurídico).
-- [ ] **Camada de Autenticação Corporativa (SSO):** Adição de autenticação via OIDC / Microsoft Entra ID para controle de acesso baseado em cargos (RBAC).
-- [ ] **Avaliação Automatizada de RAG (RAGAS / TruLens):** Implementação de suíte de testes automatizados para avaliar métricas de fidelidade (*faithfulness*) e relevância de contexto (*answer relevancy*).
+### 1. Avaliação Sistemática de RAG (Qualidade e Confiabilidade)
+Em vez de depender apenas de validações manuais, a evolução natural para ambientes críticos envolve:
+- **Golden Dataset & Testes de Regressão:** Criação de um conjunto curado de perguntas, contextos esperados e gabaritos de resposta.
+- **Métricas de Recuperação (*Retrieval*):**
+  - *Context Precision:* Avaliar se os trechos recuperados pelo FAISS são estritamente relevantes para a consulta.
+  - *Context Recall:* Avaliar se todas as informações necessárias para responder à pergunta foram devidamente recuperadas.
+- **Métricas de Geração:**
+  - *Faithfulness (Fidelidade):* Medir se a resposta gerada pela LLM está 100% ancorada no contexto recuperado, eliminando alucinações.
+  - *Answer Correctness:* Comparar a resposta produzida com a resposta de referência do gabarito.
+- **Casos Negativos (Ausência de Contexto):** Testar sistematicamente perguntas sobre tópicos inexistentes no documento para validar se o modelo responde estritamente que a informação não foi encontrada.
+
+### 2. Infraestrutura e Persistência
+- [ ] **Persistência de Índice Vetorial:** Persistir os índices FAISS em disco ou migrar para bancos vetoriais gerenciados (Chroma / PgVector / Qdrant) para bases com múltiplos documentos.
+- [ ] **Filtros por Metadados:** Permitir segmentação por departamento (ex: políticas de RH vs TI vs Financeiro).
+- [ ] **Autenticação Corporativa (SSO):** Integração com OpenID Connect (OIDC) / Microsoft Entra ID para controle de acesso baseado em perfis (RBAC).
+
+---
+
+## 🎯 Síntese
+
+O projeto foi estruturado com foco em modularidade, execução local, reprodutibilidade do ambiente e separação clara entre interface, ingestão, recuperação e geração. A arquitetura evita dependência de APIs externas de IA durante a execução e documenta caminhos claros de evolução para um cenário corporativo privado.
