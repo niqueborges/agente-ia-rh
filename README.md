@@ -41,7 +41,7 @@ Containerização e Orquestração (Dockerfile + Docker Compose)
 Documentação de Decisões de Engenharia e Topologias
 ```
 
-1. **Prova de Conceito Inicial (OpenAI):** O protótipo inicial utilizava APIs da OpenAI (`text-embedding-3-small` e `gpt-4o-mini`) em um script único.
+1. **Prova de Conceito Inicial (OpenAI):** O protótipo inicial utilizava APIs da OpenAI (`text-embedding-3-small` e `gpt-4o-mini`) em um script único, sem cache, sem streaming e sem separação de responsabilidades. Preservado como [`app_basic.py`](app_basic.py) para referência histórica.
 2. **Transição para IA Local (Ollama):** Diante da dependência de cotas pagas e buscando manter o processamento no ambiente local, o pipeline foi adaptado para **Ollama** (`nomic-embed-text` para embeddings e modelos como `mistral:7b`, `qwen2.5-coder` e `qwen3` para geração).
 3. **Modularização e Engenharia de Produção:** O código foi desacoplado em módulos independentes (`rag/` para lógica de negócio e `app.py` estritamente para interface Streamlit), com detecção dinâmica de ambiente de rede (WSL/Docker) e containerização.
 
@@ -142,6 +142,7 @@ Para um ambiente corporativo real, a aplicação não é exposta diretamente na 
 ```text
 agente-ia-rh/
 ├── app.py                      # Interface de usuário interativa (Streamlit)
+├── app_basic.py                # PoC histórica: script monolítico com OpenAI (referência)
 ├── rag/                        # Módulo central de RAG (Lógica de Negócio)
 │   ├── __init__.py             # Exportações públicas do pacote
 │   ├── ollama_client.py        # Conector Ollama e resolução dinâmica de host
@@ -149,7 +150,7 @@ agente-ia-rh/
 │   └── chain.py                # Composição da chain RAG com LCEL
 ├── data/
 │   └── politica_rh_exemplo.pdf # Documento fictício para demonstração
-├── Dockerfile                  # Imagem de produção containerizada
+├── Dockerfile                  # Definição da imagem da aplicação
 ├── docker-compose.yml          # Orquestração do serviço
 ├── .env.example                # Template documentado de variáveis de ambiente
 ├── .gitignore                  # Exclusão de caches, ambientes e segredos
