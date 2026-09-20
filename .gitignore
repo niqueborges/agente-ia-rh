@@ -1,0 +1,23 @@
+# Ambientes virtuais
+.venv/
+env/
+venv/
+ENV/
+
+# Variáveis de ambiente e segredos
+.env
+.streamlit/secrets.toml
+
+# Byte-compiled / cache do Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Logs e arquivos temporários
+*.log
+scratch/
+docs_ignore/
+.agents/
+.DS_Store
