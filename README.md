@@ -1,4 +1,4 @@
-# 💼 Assistente de RH com IA (RAG Local & Privado)
+# 💼 Assistente de RH com IA (RAG Local)
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.40%2B-red.svg)](https://streamlit.io/)
@@ -8,7 +8,7 @@
 
 Assistente inteligente de Recursos Humanos para consulta de políticas internas corporativas (férias, benefícios, jornada de trabalho e conduta), desenvolvido com a arquitetura **RAG (Retrieval-Augmented Generation)**.
 
-A aplicação opera **100% localmente e com privacidade total**, garantindo que nenhum dado sensível da empresa seja transmitido para APIs de terceiros.
+A aplicação opera localmente com Ollama, evitando o envio do conteúdo consultado e dos documentos para APIs externas de IA durante a execução.
 
 ---
 
@@ -42,7 +42,7 @@ Documentação de Decisões de Engenharia e Topologias
 ```
 
 1. **Prova de Conceito Inicial (OpenAI):** O protótipo inicial utilizava APIs da OpenAI (`text-embedding-3-small` e `gpt-4o-mini`) em um script único.
-2. **Transição para IA Local (Ollama):** Diante da dependência de cotas pagas e buscando total privacidade de dados, o pipeline foi adaptado para **Ollama** (`nomic-embed-text` para embeddings e modelos como `mistral:7b`, `qwen2.5-coder` e `qwen3` para geração).
+2. **Transição para IA Local (Ollama):** Diante da dependência de cotas pagas e buscando manter o processamento no ambiente local, o pipeline foi adaptado para **Ollama** (`nomic-embed-text` para embeddings e modelos como `mistral:7b`, `qwen2.5-coder` e `qwen3` para geração).
 3. **Modularização e Engenharia de Produção:** O código foi desacoplado em módulos independentes (`rag/` para lógica de negócio e `app.py` estritamente para interface Streamlit), com detecção dinâmica de ambiente de rede (WSL/Docker) e containerização.
 
 ---
@@ -119,6 +119,8 @@ Para um ambiente corporativo real, a aplicação não é exposta diretamente na 
        └── [ Servidor de Inferência Dedicado (Ollama / vLLM com GPU corporativa) ]
 ```
 
+> *Nota: Arquitetura conceitual de evolução para produção; esses componentes não fazem parte da implantação atual do protótipo.*
+
 ---
 
 ## ⚖️ Decisões de Engenharia e Arquitetura
@@ -127,9 +129,9 @@ Para um ambiente corporativo real, a aplicação não é exposta diretamente na 
 | :--- | :--- | :--- |
 | **Separação UI vs RAG** | `app.py` + pacote `rag/` | Desacopla a camada de apresentação Streamlit da lógica de processamento e recuperação de dados. |
 | **Otimização de Cache** | `@st.cache_resource` | Evita a releitura do PDF e a regeneração de embeddings a cada interação ou re-execução do Streamlit. |
-| **Banco Vetorial em Memória** | `FAISS (faiss-cpu)` | Busca vetorial semântica de altíssima velocidade sem a necessidade de infraestrutura pesada de banco externo. |
-| **Filtro de Relevância ($k=3$)** | `as_retriever(k=3)` | Balanço ideal entre contexto suficiente e economia da janela de contexto da LLM, reduzindo alucinações. |
-| **Baixa Latência Percebida** | `chain.stream()` + `st.write_stream` | Streaming de resposta token a token, entregando feedback imediato ao usuário (baixo Time-To-First-Token). |
+| **Banco Vetorial em Memória** | `FAISS (faiss-cpu)` | Busca vetorial semântica eficiente, sem necessidade de infraestrutura externa de banco de dados. |
+| **Recuperação de Documentos ($k=3$)** | `as_retriever(k=3)` | Recupera três trechos por consulta, mantendo o contexto enviado ao modelo controlado. O valor pode ser ajustado conforme a base documental. |
+| **Streaming de Resposta** | `chain.stream()` + `st.write_stream` | Streaming de resposta token a token, permitindo que o usuário veja a geração progressivamente. |
 | **Portabilidade de Ambiente** | `obter_url_ollama()` via socket | Resolução de rede não-bloqueante (0.3s timeout) compatível com Linux nativo, Docker e WSL2. |
 | **Desacoplamento do Pipeline** | LangChain Expression Language (LCEL) | Facilita a substituição transparente de componentes (LLMs, prompts e retrievers). |
 
@@ -229,11 +231,11 @@ Como parte das boas práticas de engenharia de software, o escopo atual está de
 Em vez de depender apenas de validações manuais, a evolução natural para ambientes críticos envolve:
 - **Golden Dataset & Testes de Regressão:** Criação de um conjunto curado de perguntas, contextos esperados e gabaritos de resposta.
 - **Métricas de Recuperação (*Retrieval*):**
-  - *Context Precision:* Avaliar se os trechos recuperados pelo FAISS são estritamente relevantes para a consulta.
-  - *Context Recall:* Avaliar se todas as informações necessárias para responder à pergunta foram devidamente recuperadas.
+  - *Context Precision:* Avaliar se os trechos recuperados pelo FAISS são relevantes para a consulta.
+  - *Context Recall:* Avaliar se as informações necessárias para responder à pergunta foram recuperadas.
 - **Métricas de Geração:**
-  - *Faithfulness (Fidelidade):* Medir se a resposta gerada pela LLM está 100% ancorada no contexto recuperado, eliminando alucinações.
-  - *Answer Correctness:* Comparar a resposta produzida com a resposta de referência do gabarito.
+  - *Faithfulness:* Avaliar em que medida a resposta gerada está fundamentada no contexto recuperado.
+  - *Answer Correctness:* Comparar a resposta produzida com uma resposta de referência, quando houver um gabarito adequado.
 - **Casos Negativos (Ausência de Contexto):** Testar sistematicamente perguntas sobre tópicos inexistentes no documento para validar se o modelo responde estritamente que a informação não foi encontrada.
 
 ### 2. Infraestrutura e Persistência
@@ -253,5 +255,4 @@ O projeto foi estruturado com foco em modularidade, execução local, reprodutib
 
 Este projeto teve como ponto de partida o tutorial e materiais disponibilizados no YouTube:
 - **Vídeo de Referência:** [Assistente RAG com Streamlit e LangChain](https://www.youtube.com/watch?v=XqG3RN6VzDw)
-- **Agradecimentos:** Aos autores do conteúdo original que serviu como prova de conceito (PoC) inicial, a partir da qual o projeto foi expandido e refatorado com execução 100% local (Ollama), resolução dinâmica de rede (WSL/Windows), arquitetura modular em pacotes e containerização com Docker.
-
+- **Agradecimentos:** Aos autores do conteúdo original que serviu como prova de conceito (PoC) inicial, a partir da qual o projeto foi expandido e refatorado com execução local (Ollama), resolução dinâmica de rede (WSL/Windows), arquitetura modular em pacotes e containerização com Docker.
