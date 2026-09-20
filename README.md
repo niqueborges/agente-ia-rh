@@ -16,6 +16,31 @@ A aplicação opera **100% localmente e com privacidade total**, garantindo que 
 
 O projeto não nasceu como uma versão estática, mas passou por um ciclo real de engenharia e refatoração:
 
+```text
+OpenAI (PoC inicial com gpt-4o-mini + text-embedding-3-small)
+  │
+  ▼
+Dependência e esgotamento de cota de API externa
+  │
+  ▼
+Migração para IA Local (Ollama: nomic-embed-text + Mistral/Qwen)
+  │
+  ▼
+Ambiente Híbrido de Desenvolvimento (Windows Host + WSL2 Ubuntu)
+  │
+  ▼
+Detecção Dinâmica de Host via Socket (obter_url_ollama)
+  │
+  ▼
+Modularização da Arquitetura (rag/ package + app.py UI)
+  │
+  ▼
+Containerização e Orquestração (Dockerfile + Docker Compose)
+  │
+  ▼
+Documentação de Decisões de Engenharia e Topologias
+```
+
 1. **Prova de Conceito Inicial (OpenAI):** O protótipo inicial utilizava APIs da OpenAI (`text-embedding-3-small` e `gpt-4o-mini`) em um script único.
 2. **Transição para IA Local (Ollama):** Diante da dependência de cotas pagas e buscando total privacidade de dados, o pipeline foi adaptado para **Ollama** (`nomic-embed-text` para embeddings e modelos como `mistral:7b`, `qwen2.5-coder` e `qwen3` para geração).
 3. **Modularização e Engenharia de Produção:** O código foi desacoplado em módulos independentes (`rag/` para lógica de negócio e `app.py` estritamente para interface Streamlit), com detecção dinâmica de ambiente de rede (WSL/Docker) e containerização.
