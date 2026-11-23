@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import json
 import os
-import socket
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -67,11 +66,15 @@ def validar_e_normalizar_url_ollama(url: str) -> str:
     # Esquema
     esquema = parsed.scheme.lower()
     if esquema not in ("http", "https"):
-        raise OllamaConfigurationError(f"Esquema de protocolo inválido '{parsed.scheme}'. Deve ser 'http' ou 'https'.")
+        raise OllamaConfigurationError(
+            f"Esquema de protocolo inválido '{parsed.scheme}'. Deve ser 'http' ou 'https'."
+        )
 
     # Credenciais
     if parsed.username or parsed.password:
-        raise OllamaConfigurationError("Credenciais de autenticação embutidas na URL não são permitidas.")
+        raise OllamaConfigurationError(
+            "Credenciais de autenticação embutidas na URL não são permitidas."
+        )
 
     # Hostname
     hostname = parsed.hostname
@@ -105,7 +108,9 @@ def validar_e_normalizar_url_ollama(url: str) -> str:
     caminho = parsed.path.rstrip("/")
     caminho_partes = [p for p in caminho.split("/") if p]
     if "api" in caminho_partes:
-        raise OllamaConfigurationError("A URL base não deve conter caminhos reservados da API (/api, /api/tags, etc.).")
+        raise OllamaConfigurationError(
+            "A URL base não deve conter caminhos reservados da API (/api, /api/tags, etc.)."
+        )
 
     # Formatação do Hostname para IPv6
     if ":" in hostname and not hostname.startswith("["):
@@ -158,7 +163,6 @@ def verificar_conexao_ollama(base_url: str | None = None, timeout: float = 1.0) 
         urllib.error.HTTPError,
         urllib.error.URLError,
         TimeoutError,
-        socket.timeout,
         json.JSONDecodeError,
         KeyError,
         ConnectionResetError,
@@ -166,7 +170,9 @@ def verificar_conexao_ollama(base_url: str | None = None, timeout: float = 1.0) 
         return False
 
 
-def listar_modelos_ollama(base_url: str | None = None, timeout: float = 2.0) -> list[dict[str, Any]]:
+def listar_modelos_ollama(
+    base_url: str | None = None, timeout: float = 2.0
+) -> list[dict[str, Any]]:
     """
     Consulta o endpoint GET /api/tags e retorna os dados brutos dos modelos disponíveis.
     """
@@ -186,13 +192,7 @@ def listar_modelos_ollama(base_url: str | None = None, timeout: float = 2.0) -> 
             if isinstance(dados, dict) and isinstance(dados.get("models"), list):
                 return dados["models"]
             return []
-    except (
-        urllib.error.HTTPError,
-        urllib.error.URLError,
-        TimeoutError,
-        socket.timeout,
-        json.JSONDecodeError,
-    ):
+    except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, json.JSONDecodeError):
         return []
 
 
@@ -209,7 +209,6 @@ def listar_modelos_chat(base_url: str | None = None, timeout: float = 2.0) -> li
         if not nome or not isinstance(nome, str):
             continue
 
-        detalhes = item.get("details", {})
         capacidades = item.get("capabilities", [])
 
         # Exclusão estrita de modelos de embedding

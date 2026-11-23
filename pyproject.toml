@@ -1,0 +1,21 @@
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B", "SIM"]
+ignore = [
+    "E501",  # Linhas longas gerenciadas pelo ruff format
+    "B008",  # Function calls in argument defaults (comum em Streamlit)
+    "E402",  # Imports após ajuste de sys.path em scripts/tests
+    "SIM105",# try-except-pass vs contextlib.suppress
+    "B904",  # raise ... from err
+    "SIM108",# if-else em vez de ternário
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]

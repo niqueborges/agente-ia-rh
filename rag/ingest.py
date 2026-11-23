@@ -13,7 +13,6 @@ import os
 import shutil
 import time
 from pathlib import Path
-from typing import Any, Sequence
 
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import FAISS
@@ -21,7 +20,7 @@ from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from .ollama_client import MODELO_EMBEDDINGS_PADRAO, obter_embeddings
+from .ollama_client import obter_embeddings
 
 SCHEMA_VERSION = "1.0"
 DIRETORIO_DADOS = Path("data")
@@ -113,7 +112,9 @@ def adquirir_lock(caminho_lock: Path, modo: int, timeout: float = 10.0):
         except (BlockingIOError, OSError):
             if time.time() - inicio >= timeout:
                 os.close(fd)
-                raise TimeoutError(f"Tempo limite ({timeout}s) excedido ao aguardar trava em {caminho_lock}")
+                raise TimeoutError(
+                    f"Tempo limite ({timeout}s) excedido ao aguardar trava em {caminho_lock}"
+                )
             time.sleep(0.05)
 
 
@@ -150,7 +151,7 @@ def validar_indice_funcional(
 
     # Critério 1: Manifesto
     try:
-        with open(manifesto_path, "r", encoding="utf-8") as f:
+        with open(manifesto_path, encoding="utf-8") as f:
             manifesto = json.load(f)
     except Exception as exc:
         return False, f"Falha ao decodificar manifest.json: {exc}", None
@@ -188,10 +189,18 @@ def validar_indice_funcional(
         return False, f"Objeto de índice malformado: {exc}", None
 
     if dim_indice != dim_esperada:
-        return False, f"Dimensão do índice ({dim_indice}) diverge do manifesto ({dim_esperada}).", None
+        return (
+            False,
+            f"Dimensão do índice ({dim_indice}) diverge do manifesto ({dim_esperada}).",
+            None,
+        )
 
     if ntotal != total_esperado or docstore_len != total_esperado:
-        return False, f"Contagem de fatias divergente: ntotal={ntotal}, docstore={docstore_len}, manifesto={total_esperado}.", None
+        return (
+            False,
+            f"Contagem de fatias divergente: ntotal={ntotal}, docstore={docstore_len}, manifesto={total_esperado}.",
+            None,
+        )
 
     # Critério 4: Consulta vetorial sintética direta (zero chamadas de embedding ao Ollama)
     try:
@@ -331,7 +340,9 @@ def salvar_indice_persistente(
             mover_para_quarentena(CAMINHO_INDICE, "failed_activation")
             if CAMINHO_BACKUP.exists():
                 os.rename(CAMINHO_BACKUP, CAMINHO_INDICE)
-            raise FAISSIntegrityError(f"Índice recém-gerado falhou na validação funcional: {motivo}")
+            raise FAISSIntegrityError(
+                f"Índice recém-gerado falhou na validação funcional: {motivo}"
+            )
 
     finally:
         liberar_lock(lock_fd)
@@ -356,7 +367,7 @@ def recuperar_na_inicializacao(
 
         # Inspeciona índice principal
         if CAMINHO_INDICE.exists():
-            valido, motivo, index = validar_indice_funcional(
+            valido, _motivo, index = validar_indice_funcional(
                 CAMINHO_INDICE,
                 embeddings,
                 doc_sha256_esperado=doc_sha256_esperado,
@@ -374,7 +385,7 @@ def recuperar_na_inicializacao(
 
         # Inspeciona backup funcional
         if CAMINHO_BACKUP.exists():
-            valido_bak, motivo_bak, index_bak = validar_indice_funcional(
+            valido_bak, _motivo_bak, index_bak = validar_indice_funcional(
                 CAMINHO_BACKUP,
                 embeddings,
                 doc_sha256_esperado=doc_sha256_esperado,
@@ -426,7 +437,9 @@ def carregar_ou_criar_indice(
             return indice
 
     # Reindexação completa necessária
-    blocos = carregar_documentos(caminho_pdf=caminho_pdf, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+    blocos = carregar_documentos(
+        caminho_pdf=caminho_pdf, chunk_size=chunk_size, chunk_overlap=chunk_overlap
+    )
     novo_indice = criar_banco_vetores(blocos, embeddings)
     salvar_indice_persistente(
         banco_vetores=novo_indice,

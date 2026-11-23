@@ -2,7 +2,6 @@
 Testes unitários para o módulo rag.ollama_client (ADR-0001 e ADR-0002).
 """
 
-import io
 import json
 import urllib.error
 from unittest.mock import MagicMock, patch
@@ -14,7 +13,6 @@ from rag.ollama_client import (
     MODELO_EMBEDDINGS_PADRAO,
     OllamaConfigurationError,
     listar_modelos_chat,
-    listar_modelos_ollama,
     obter_embeddings,
     obter_llm,
     obter_url_ollama,
@@ -39,11 +37,20 @@ class TestValidacaoUrlOllama:
 
     def test_url_sem_porta_adiciona_11434(self):
         assert validar_e_normalizar_url_ollama("http://localhost") == "http://localhost:11434"
-        assert validar_e_normalizar_url_ollama("https://servidor.remoto") == "https://servidor.remoto:11434"
+        assert (
+            validar_e_normalizar_url_ollama("https://servidor.remoto")
+            == "https://servidor.remoto:11434"
+        )
 
     def test_url_com_caminho_proxy_reverso(self):
-        assert validar_e_normalizar_url_ollama("http://servidor:11434/ollama") == "http://servidor:11434/ollama"
-        assert validar_e_normalizar_url_ollama("http://servidor/ollama/") == "http://servidor:11434/ollama"
+        assert (
+            validar_e_normalizar_url_ollama("http://servidor:11434/ollama")
+            == "http://servidor:11434/ollama"
+        )
+        assert (
+            validar_e_normalizar_url_ollama("http://servidor/ollama/")
+            == "http://servidor:11434/ollama"
+        )
 
     def test_rejeicao_esquema_invalido(self):
         with pytest.raises(OllamaConfigurationError, match="Esquema de protocolo inválido"):
@@ -98,9 +105,11 @@ class TestObterUrlOllama:
             assert obter_url_ollama() == "http://meu-ollama:11434"
 
     def test_lanca_excecao_quando_variavel_invalida(self):
-        with patch.dict("os.environ", {"OLLAMA_BASE_URL": "http://localhost:99999"}, clear=True):
-            with pytest.raises(OllamaConfigurationError):
-                obter_url_ollama()
+        with (
+            patch.dict("os.environ", {"OLLAMA_BASE_URL": "http://localhost:99999"}, clear=True),
+            pytest.raises(OllamaConfigurationError),
+        ):
+            obter_url_ollama()
 
 
 class TestVerificarConexaoOllama:
@@ -137,11 +146,16 @@ class TestVerificarConexaoOllama:
             assert verificar_conexao_ollama("http://127.0.0.1:11434") is False
 
     def test_falha_quando_servidor_retorna_erro_http(self):
-        with patch("urllib.request.urlopen", side_effect=urllib.error.HTTPError("url", 404, "Not Found", {}, None)):
+        with patch(
+            "urllib.request.urlopen",
+            side_effect=urllib.error.HTTPError("url", 404, "Not Found", {}, None),
+        ):
             assert verificar_conexao_ollama("http://127.0.0.1:11434") is False
 
     def test_falha_quando_servidor_inalcancavel(self):
-        with patch("urllib.request.urlopen", side_effect=urllib.error.URLError("Connection refused")):
+        with patch(
+            "urllib.request.urlopen", side_effect=urllib.error.URLError("Connection refused")
+        ):
             assert verificar_conexao_ollama("http://127.0.0.1:11434") is False
 
     def test_lanca_excecao_para_url_malformada_sem_disparar_rede(self):

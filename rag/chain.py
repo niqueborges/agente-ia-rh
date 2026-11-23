@@ -5,7 +5,7 @@ Implementa formatação estrita de contexto (ADR-0003) para evitar vazamento de 
 
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document

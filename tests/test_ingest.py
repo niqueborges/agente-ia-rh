@@ -3,10 +3,7 @@ Testes unitários para o módulo rag.ingest e persistência FAISS (ADR-0004).
 """
 
 import json
-from pathlib import Path
-from unittest.mock import MagicMock, patch
 
-import pytest
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
@@ -15,7 +12,6 @@ from rag.ingest import (
     SCHEMA_VERSION,
     calcular_hash_arquivo,
     calcular_hash_chunking,
-    carregar_ou_criar_indice,
     gerar_collection_id,
     recuperar_na_inicializacao,
     salvar_indice_persistente,
@@ -78,7 +74,9 @@ class TestValidacaoFuncionalIndice:
         assert "Falha ao decodificar manifest.json" in motivo
 
     def test_falha_se_hash_documento_diverge(self, tmp_path):
-        docs = [Document(page_content="Texto de teste", metadata={"source": "manual.pdf", "page": 1})]
+        docs = [
+            Document(page_content="Texto de teste", metadata={"source": "manual.pdf", "page": 1})
+        ]
         embeddings = MockEmbeddings(dimension=4)
         faiss_store = FAISS.from_documents(docs, embeddings)
         faiss_store.save_local(str(tmp_path))
@@ -102,7 +100,12 @@ class TestValidacaoFuncionalIndice:
         assert "Hash do documento PDF diverge" in motivo
 
     def test_sucesso_em_indice_integro(self, tmp_path):
-        docs = [Document(page_content="Política de férias da empresa", metadata={"source": "manual.pdf", "page": 1})]
+        docs = [
+            Document(
+                page_content="Política de férias da empresa",
+                metadata={"source": "manual.pdf", "page": 1},
+            )
+        ]
         embeddings = MockEmbeddings(dimension=4)
         faiss_store = FAISS.from_documents(docs, embeddings)
         faiss_store.save_local(str(tmp_path))
@@ -145,7 +148,9 @@ class TestPersistenciaEStartupRecovery:
         monkeypatch.setattr("rag.ingest.CAMINHO_TMP", dir_dados / "faiss_index_tmp")
         monkeypatch.setattr("rag.ingest.CAMINHO_LOCK", dir_dados / "faiss_index.lock")
 
-        docs = [Document(page_content="Manual interno", metadata={"source": str(pdf_fake), "page": 1})]
+        docs = [
+            Document(page_content="Manual interno", metadata={"source": str(pdf_fake), "page": 1})
+        ]
         embeddings = MockEmbeddings(dimension=4)
         banco = FAISS.from_documents(docs, embeddings)
 

@@ -14,8 +14,12 @@ class TestFormatacaoDocumentos:
 
     def test_formata_lista_de_documentos_com_sucesso(self):
         docs = [
-            Document(page_content="Política de Férias: 30 dias após 12 meses.", metadata={"page": 1}),
-            Document(page_content="Home office: Permitido 2 vezes por semana.", metadata={"page": 3}),
+            Document(
+                page_content="Política de Férias: 30 dias após 12 meses.", metadata={"page": 1}
+            ),
+            Document(
+                page_content="Home office: Permitido 2 vezes por semana.", metadata={"page": 3}
+            ),
         ]
         resultado = formatar_documentos(docs)
 
@@ -36,11 +40,16 @@ class TestFormatacaoDocumentos:
 
     def test_trata_espacos_em_branco_excedentes(self):
         docs = [
-            Document(page_content="   Texto com espaços antes e depois.   \n", metadata={"page": 0}),
+            Document(
+                page_content="   Texto com espaços antes e depois.   \n", metadata={"page": 0}
+            ),
             Document(page_content="Segundo documento sem espaços extras.", metadata={"page": 1}),
         ]
         resultado = formatar_documentos(docs)
-        assert resultado == "Texto com espaços antes e depois.\n\nSegundo documento sem espaços extras."
+        assert (
+            resultado
+            == "Texto com espaços antes e depois.\n\nSegundo documento sem espaços extras."
+        )
 
 
 class TestCriarChainRAG:

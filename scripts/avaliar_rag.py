@@ -6,7 +6,6 @@ Avalia Context Hit Rate, Aderência ao Gabarito, Recusa Correta e Latência de I
 from __future__ import annotations
 
 import json
-import os
 import sys
 import time
 from pathlib import Path
@@ -18,7 +17,12 @@ if str(RAIZ) not in sys.path:
 
 from rag.chain import criar_chain_rag
 from rag.ingest import carregar_ou_criar_indice
-from rag.ollama_client import obter_embeddings, obter_llm, obter_url_ollama, verificar_conexao_ollama
+from rag.ollama_client import (
+    obter_embeddings,
+    obter_llm,
+    obter_url_ollama,
+    verificar_conexao_ollama,
+)
 
 CAMINHO_DATASET = RAIZ / "data" / "golden_dataset.json"
 CAMINHO_OUTPUT = RAIZ / "data" / "benchmarks" / "resultado_benchmark.json"
@@ -79,7 +83,7 @@ def executar_benchmark():
         print(f"ERRO: Ollama indisponível em {url_ollama}")
         sys.exit(1)
 
-    with open(CAMINHO_DATASET, "r", encoding="utf-8") as f:
+    with open(CAMINHO_DATASET, encoding="utf-8") as f:
         dataset = json.load(f)
 
     print(f"Dataset carregado: {len(dataset)} perguntas de referência.")
@@ -93,7 +97,7 @@ def executar_benchmark():
     # Carrega dados parciais se já existirem
     if CAMINHO_OUTPUT.exists():
         try:
-            with open(CAMINHO_OUTPUT, "r", encoding="utf-8") as f:
+            with open(CAMINHO_OUTPUT, encoding="utf-8") as f:
                 resultados_finais = json.load(f)
         except Exception:
             resultados_finais = {}
@@ -137,23 +141,35 @@ def executar_benchmark():
                 preview = f"FALHA: {exc}"
                 print(f"    -> Erro na pergunta {item['id']}: {exc}")
 
-            metricas_modelo.append({
-                "id": item["id"],
-                "tempo_recuperacao_s": round(t_rec, 4),
-                "tempo_geracao_s": round(t_gen, 2),
-                "tokens_estimados": int(tokens_est) if 'tokens_est' in locals() else 0,
-                "recuperacao": rec_eval,
-                "geracao": gen_eval,
-                "resposta_preview": preview,
-            })
+            metricas_modelo.append(
+                {
+                    "id": item["id"],
+                    "tempo_recuperacao_s": round(t_rec, 4),
+                    "tempo_geracao_s": round(t_gen, 2),
+                    "tokens_estimados": int(tokens_est) if "tokens_est" in locals() else 0,
+                    "recuperacao": rec_eval,
+                    "geracao": gen_eval,
+                    "resposta_preview": preview,
+                }
+            )
 
         # Agregação das métricas
-        perguntas_positivas = [m for m in metricas_modelo if not dataset[metricas_modelo.index(m)]["espera_recusa"]]
-        perguntas_negativas = [m for m in metricas_modelo if dataset[metricas_modelo.index(m)]["espera_recusa"]]
+        perguntas_positivas = [
+            m for m in metricas_modelo if not dataset[metricas_modelo.index(m)]["espera_recusa"]
+        ]
+        perguntas_negativas = [
+            m for m in metricas_modelo if dataset[metricas_modelo.index(m)]["espera_recusa"]
+        ]
 
-        hit_rate = sum(1 for m in perguntas_positivas if m["recuperacao"]["hit"]) / len(perguntas_positivas)
-        aderencia_media = sum(m["geracao"]["aderencia"] for m in perguntas_positivas) / len(perguntas_positivas)
-        recusa_correta = sum(1 for m in perguntas_negativas if m["geracao"].get("recusa_correta")) / len(perguntas_negativas)
+        hit_rate = sum(1 for m in perguntas_positivas if m["recuperacao"]["hit"]) / len(
+            perguntas_positivas
+        )
+        aderencia_media = sum(m["geracao"]["aderencia"] for m in perguntas_positivas) / len(
+            perguntas_positivas
+        )
+        recusa_correta = sum(
+            1 for m in perguntas_negativas if m["geracao"].get("recusa_correta")
+        ) / len(perguntas_negativas)
         tempo_medio_gen = sum(tempos_geracao) / len(tempos_geracao) if tempos_geracao else 0.0
         tempo_total = sum(tempos_geracao)
         tokens_por_segundo = total_tokens_gerados / tempo_total if tempo_total > 0 else 0
@@ -192,8 +208,16 @@ def executar_benchmark():
         ("Tempo Médio de Geração", "tempo_medio_geracao_s", "s"),
         ("Taxa de Geração (Tokens/s)", "throughput_tokens_seg", " tok/s"),
     ]:
-        v1 = f"{resultados_finais[m1]['resumo'][chave]}{unidade}" if m1 in resultados_finais else "N/A"
-        v2 = f"{resultados_finais[m2]['resumo'][chave]}{unidade}" if m2 in resultados_finais else "N/A"
+        v1 = (
+            f"{resultados_finais[m1]['resumo'][chave]}{unidade}"
+            if m1 in resultados_finais
+            else "N/A"
+        )
+        v2 = (
+            f"{resultados_finais[m2]['resumo'][chave]}{unidade}"
+            if m2 in resultados_finais
+            else "N/A"
+        )
         print(f"{rotulo:<35} | {v1:<15} | {v2:<15}")
     print("=================================================================")
     print(f"Resultados completos salvos em: {CAMINHO_OUTPUT}")

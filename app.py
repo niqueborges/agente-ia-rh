@@ -35,7 +35,9 @@ st.set_page_config(
 )
 
 st.title("💼 Assistente de RH — Políticas Internas")
-st.caption("Consulte informações sobre benefícios, férias, jornada e políticas da empresa (100% local e privado).")
+st.caption(
+    "Consulte informações sobre benefícios, férias, jornada e políticas da empresa (100% local e privado)."
+)
 
 # ==========================================
 # Verificação de Conectividade do Ollama (ADR-0001)
@@ -44,7 +46,9 @@ try:
     url_ollama = obter_url_ollama()
 except OllamaConfigurationError as exc:
     st.error(f"❌ **Erro de Configuração do Ollama:** {exc}")
-    st.info("Verifique a variável de ambiente `OLLAMA_BASE_URL` ou mantenha o padrão `http://127.0.0.1:11434`.")
+    st.info(
+        "Verifique a variável de ambiente `OLLAMA_BASE_URL` ou mantenha o padrão `http://127.0.0.1:11434`."
+    )
     st.stop()
 
 if not verificar_conexao_ollama(url_ollama, timeout=1.5):
@@ -72,7 +76,7 @@ def carregar_recursos(base_url: str):
 
 try:
     banco_vetores = carregar_recursos(url_ollama)
-except Exception as exc:
+except (RuntimeError, ValueError, OSError) as exc:
     st.error(f"❌ **Erro ao inicializar o banco vetorial FAISS:** {exc}")
     st.stop()
 
@@ -135,7 +139,11 @@ with st.sidebar:
             st.session_state["messages"] = []
             st.rerun()
     with col_btn2:
-        if st.button("🔄 Reindexar", width="stretch", help="Força a recriação do índice FAISS a partir do PDF."):
+        if st.button(
+            "🔄 Reindexar",
+            width="stretch",
+            help="Força a recriação do índice FAISS a partir do PDF.",
+        ):
             st.cache_resource.clear()
             carregar_ou_criar_indice(
                 caminho_pdf="data/politica_rh_exemplo.pdf",
@@ -163,10 +171,12 @@ if "messages" not in st.session_state:
 for msg in st.session_state["messages"]:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
-        if "sources" in msg and msg["sources"]:
+        if msg.get("sources"):
             with st.expander("📄 Trechos consultados"):
                 for idx, src in enumerate(msg["sources"], start=1):
-                    st.markdown(f"**Trecho {idx} (Página {src.get('page', '?')}):**\n>{src.get('text', '')}")
+                    st.markdown(
+                        f"**Trecho {idx} (Página {src.get('page', '?')}):**\n>{src.get('text', '')}"
+                    )
 
 # Processamento da entrada do usuário
 prompt = st.chat_input("Pergunte sobre as políticas da empresa...", submit_mode="disable")
@@ -193,4 +203,6 @@ if prompt:
             for idx, src in enumerate(fontes, start=1):
                 st.markdown(f"**Trecho {idx} (Página {src['page']}):**\n>{src['text']}")
 
-    st.session_state["messages"].append({"role": "assistant", "content": resposta, "sources": fontes})
+    st.session_state["messages"].append(
+        {"role": "assistant", "content": resposta, "sources": fontes}
+    )
