@@ -21,3 +21,10 @@ scratch/
 docs_ignore/
 .agents/
 .DS_Store
+
+# Artefatos gerados de persistência vetorial e locks (ADR-0004)
+data/faiss_index/
+data/faiss_index_*/
+data/*.lock
+data/*.tmp
+data/*.bak

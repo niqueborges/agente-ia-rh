@@ -14,14 +14,26 @@ from .ollama_client import (
     verificar_conexao_ollama,
     verificar_modelo_disponivel,
 )
-from .ingest import carregar_documentos, criar_banco_vetores
+from .ingest import (
+    FAISSIntegrityError,
+    carregar_documentos,
+    carregar_e_indexar_pdf,
+    carregar_ou_criar_indice,
+    criar_banco_vetores,
+    recuperar_na_inicializacao,
+    salvar_indice_persistente,
+    validar_indice_funcional,
+)
 from .chain import criar_chain_rag, formatar_documentos
 
 __all__ = [
+    "FAISSIntegrityError",
     "MODELO_CHAT_PADRAO",
     "MODELO_EMBEDDINGS_PADRAO",
     "OllamaConfigurationError",
     "carregar_documentos",
+    "carregar_e_indexar_pdf",
+    "carregar_ou_criar_indice",
     "criar_banco_vetores",
     "criar_chain_rag",
     "formatar_documentos",
@@ -29,6 +41,9 @@ __all__ = [
     "obter_embeddings",
     "obter_llm",
     "obter_url_ollama",
+    "recuperar_na_inicializacao",
+    "salvar_indice_persistente",
+    "validar_indice_funcional",
     "verificar_conexao_ollama",
     "verificar_modelo_disponivel",
 ]
