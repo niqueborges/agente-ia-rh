@@ -1,7 +1,7 @@
 # 💼 Assistente de RH com IA (RAG Local)
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.40%2B-red.svg)](https://streamlit.io/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.59%2B-red.svg)](https://streamlit.io/)
 [![LangChain](https://img.shields.io/badge/LangChain-LCEL-green.svg)](https://www.langchain.com/)
 [![FAISS](https://img.shields.io/badge/FAISS-VectorStore-orange.svg)](https://github.com/facebookresearch/faiss)
 [![Ollama](https://img.shields.io/badge/Ollama-Local%20LLM-black.svg)](https://ollama.com/)
@@ -78,30 +78,26 @@ flowchart TD
 
 ## 🖥️ Topologia de Execução: Desenvolvimento vs Produção
 
-### Ambiente Real de Desenvolvimento (Windows Host + WSL2)
+### Ambiente Principal de Desenvolvimento (Ubuntu 26.04 Nativo)
 
-No cenário de desenvolvimento, o servidor Ollama executa no Windows (aproveitando aceleração de hardware) enquanto a aplicação Python roda no subsistema Linux (WSL2):
+No ambiente principal de desenvolvimento e execução, tanto o servidor Ollama (gerenciado pelo `systemd`) quanto a aplicação Python (Streamlit em `.venv`) operam diretamente no host Linux, comunicando-se deterministicamente via loopback em `http://127.0.0.1:11434`:
 
 ```text
-┌──────────────────────────────────────────────┐
-│                Windows Host                  │
-│                                              │
-│               Servidor Ollama                │
-│             http://localhost:11434           │
-└──────────────────────┬───────────────────────┘
-                       │
-             Rede Virtual WSL2 / Gateway
-                       │
-┌──────────────────────▼───────────────────────┐
-│                 WSL2: Ubuntu                 │
-│                                              │
-│  app.py (Streamlit UI)                       │
-│     └── rag/                                 │
-│          ├── ollama_client.py (Host Resolver)│
-│          ├── ingest.py (PyPDF + FAISS)       │
-│          └── chain.py (LangChain LCEL)       │
-└──────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                   Host Ubuntu 26.04 LTS                     │
+│                                                             │
+│  Servidor Ollama (systemd) ───────► http://127.0.0.1:11434  │
+│                                              ▲              │
+│                                              │ (loopback)   │
+│  Streamlit App (.venv) ──────────────────────┘              │
+│     └── rag/                                                │
+│          ├── ollama_client.py (URL & Catálogo Dinâmico)     │
+│          ├── ingest.py (FAISS Persistente + Manifesto)      │
+│          └── chain.py (LCEL + Formatação Estrita)           │
+└─────────────────────────────────────────────────────────────┘
 ```
+
+> **Contexto Histórico (V1 sob Windows + WSL2):** Na Prova de Conceito inicial, o Ollama rodava no Windows Host e o app no subsistema WSL2. A resolução de rota via subprocesso `ip route` foi substituída na V2 por resolução determinística nativa conforme a [ADR-0001](docs/adr/0001-resolucao-conectividade-ollama.md).
 
 ### Arquitetura Alvo em Produção Corporativa
 
@@ -132,8 +128,11 @@ Para um ambiente corporativo real, a aplicação não é exposta diretamente na 
 | **Banco Vetorial em Memória** | `FAISS (faiss-cpu)` | Busca vetorial semântica eficiente, sem necessidade de infraestrutura externa de banco de dados. |
 | **Recuperação de Documentos ($k=3$)** | `as_retriever(k=3)` | Recupera três trechos por consulta, mantendo o contexto enviado ao modelo controlado. O valor pode ser ajustado conforme a base documental. |
 | **Streaming de Resposta** | `chain.stream()` + `st.write_stream` | Streaming de resposta token a token, permitindo que o usuário veja a geração progressivamente. |
-| **Portabilidade de Ambiente** | `obter_url_ollama()` via socket | Resolução de rede não-bloqueante (0.3s timeout) compatível com Linux nativo, Docker e WSL2. |
+| **Portabilidade de Ambiente (V1)** | `obter_url_ollama()` via socket | Resolução de rede via socket (0.3s timeout) concebida no protótipo original sob WSL2; a operação comprovada no Linux nativo utiliza localhost, enquanto a eliminação de subprocessos de rede e o desacoplamento de Docker estão planejados na ADR-0001 da V2. |
 | **Desacoplamento do Pipeline** | LangChain Expression Language (LCEL) | Facilita a substituição transparente de componentes (LLMs, prompts e retrievers). |
+
+> 📖 **Registro Formal de Decisões de Arquitetura (ADRs da V2):**
+> Para consultar as decisões técnicas, justificativas e critérios de validação para a evolução do projeto, acesse o [Índice de ADRs (docs/adr/README.md)](docs/adr/README.md).
 
 ---
 
@@ -142,6 +141,8 @@ Para um ambiente corporativo real, a aplicação não é exposta diretamente na 
 ```text
 agente-ia-rh/
 ├── app.py                      # Interface de usuário interativa (Streamlit)
+├── docs/                       # Documentação técnica e registros arquiteturais
+│   └── adr/                    # Architecture Decision Records (ADRs da V2)
 ├── rag/                        # Módulo central de RAG (Lógica de Negócio)
 │   ├── __init__.py             # Exportações públicas do pacote
 │   ├── ollama_client.py        # Conector Ollama e resolução dinâmica de host
@@ -153,7 +154,7 @@ agente-ia-rh/
 ├── docker-compose.yml          # Orquestração do serviço
 ├── .env.example                # Template documentado de variáveis de ambiente
 ├── .gitignore                  # Exclusão de caches, ambientes e segredos
-├── requirements.txt            # Dependências fixadas do projeto
+├── requirements.txt            # Dependências do projeto (governadas pela ADR-0005)
 └── README.md                   # Documentação arquitetural e técnica
 ```
 
@@ -170,10 +171,9 @@ Baixe os modelos necessários no Ollama:
 # Modelo de Embeddings (obrigatório)
 ollama pull nomic-embed-text
 
-# Modelos de Linguagem (baixe um ou mais)
-ollama pull mistral:7b
-ollama pull qwen2.5-coder:7b
-ollama pull qwen3:4b
+# Modelos de Linguagem recomendados (compatíveis com inferência local em CPU)
+ollama pull qwen3.5:4b      # Modelo conversacional padrão (raciocínio leve e ágil)
+ollama pull llama3.1:8b     # Modelo alternativo para respostas mais aprofundadas
 ```
 
 ---
