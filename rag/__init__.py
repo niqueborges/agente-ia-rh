@@ -15,7 +15,7 @@ from .ollama_client import (
     verificar_modelo_disponivel,
 )
 from .ingest import carregar_documentos, criar_banco_vetores
-from .chain import criar_chain_rag
+from .chain import criar_chain_rag, formatar_documentos
 
 __all__ = [
     "MODELO_CHAT_PADRAO",
@@ -24,6 +24,7 @@ __all__ = [
     "carregar_documentos",
     "criar_banco_vetores",
     "criar_chain_rag",
+    "formatar_documentos",
     "listar_modelos_chat",
     "obter_embeddings",
     "obter_llm",
