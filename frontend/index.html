@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assistente Virtual de RH — Políticas Internas</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Cabeçalho Corporativo Amigável -->
+    <header class="header">
+      <div class="header-left">
+        <div class="brand-avatar">💼</div>
+        <div class="brand-info">
+          <h1>Assistente de RH</h1>
+          <p class="brand-subtitle">Tire suas dúvidas sobre benefícios, férias, atestados e políticas internas</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div id="status-badge" class="status-badge online">
+          <span class="status-dot"></span>
+          <span id="status-text">Online</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Área de Chat -->
+    <main class="chat-main">
+      <div id="chat-messages" class="messages-container">
+        <!-- Mensagem de Boas-Vindas Inicial -->
+        <div class="message message-bot">
+          <div class="avatar">🤖</div>
+          <div class="bubble">
+            <p><strong>Olá! Sou o Assistente Virtual de RH.</strong></p>
+            <p>Estou aqui para esclarecer suas dúvidas sobre as diretrizes, benefícios e rotinas de trabalho da empresa com base oficial no nosso <em>Manual de Políticas Internas</em>.</p>
+            <p class="hint">Clique em um dos temas rápidos abaixo ou digite sua dúvida:</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sugestões Rápidas (Chips de FAQ) -->
+      <section class="suggestions-section" aria-label="Perguntas Frequentes">
+        <div class="suggestions-label">💡 Dúvidas frequentes:</div>
+        <div id="faq-chips" class="chips-container">
+          <!-- Injetado dinamicamente via app.js -->
+        </div>
+      </section>
+    </main>
+
+    <!-- Barra de Entrada de Mensagem -->
+    <footer class="input-footer">
+      <form id="chat-form" class="chat-form">
+        <textarea
+          id="user-input"
+          class="chat-input"
+          placeholder="Ex: Como funciona o período de férias? Qual o prazo para atestado médico?"
+          rows="1"
+          required
+        ></textarea>
+        <button type="submit" id="send-button" class="send-btn" title="Enviar pergunta">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+          </svg>
+        </button>
+      </form>
+      <div class="privacy-note">
+        🔒 Consulta 100% interna e confidencial. Informações extraídas das políticas vigentes da empresa.
+      </div>
+    </footer>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

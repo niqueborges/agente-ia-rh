@@ -5,6 +5,34 @@ O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.
 
 ---
 
+## [2.1.0] — 2026-11-23
+
+### 🏛️ Governança Arquitetural
+- **ADR-0006:** Desacoplamento do Backend RAG via API REST/SSE e Frontend Independente para Intranet (`docs/adr/0006-desacoplamento-api-frontend.md`).
+
+### 🚀 Funcionalidades e Melhorias
+- **Camada de API Headless Desacoplada (api/):**
+  - Construção do pacote `api/` com FastAPI (`api/main.py`, `api/schemas.py`, `api/routes/`).
+  - Endpoint `POST /api/v1/chat` com suporte nativo a streaming em tempo real via Server-Sent Events (SSE: `text/event-stream`) e modo síncrono consolidado (`stream=false`).
+  - Endpoint `GET /api/v1/health` para monitoramento de conectividade do Ollama, estado e manifesto do índice FAISS e modelo ativo.
+  - Endpoint `GET /api/v1/faq` com catálogo categorizado de perguntas frequentes do cotidiano corporativo.
+  - Middleware CORS configurado para integração transparente em redes internas e intranets (`allow_origins=["*"]`).
+  - Documentação interativa automática OpenAPI em `/docs` e ReDoc em `/redoc`.
+- **Frontend Independente para Usuários Não Técnicos (frontend/):**
+  - Interface web 100% estática (`frontend/index.html`, `frontend/styles.css`, `frontend/app.js`), sem necessidade de bundlers (Webpack, Vite) ou Node.js.
+  - Design acessível e acolhedor focado em colaboradores leigos (sem jargões técnicos de ML, embeddings ou parâmetros de rede neural).
+  - Chips clicáveis de perguntas frequentes, indicador visual de digitação (*typing indicator*), balões conversacionais e citações amigáveis do manual interno ("Página X do Manual de RH").
+- **Widget Embutível / Web Component (frontend/widget.js):**
+  - Criação do Custom Element `<assistente-rh-chat>` encapsulado em Shadow DOM para que qualquer empresa possa plugar o chat em sua intranet legada (WordPress, SharePoint, portal estático) com apenas 2 linhas de código.
+- **Coexistência de Interfaces:**
+  - O console administrativo e analítico em Streamlit (`app.py`) permanece 100% funcional, enquanto o servidor FastAPI atende as consultas da intranet.
+
+### 🧪 Testes e Qualidade de Código
+- Expansão da suíte de testes de 39 para **47 testes automatizados** com a inclusão de `tests/test_api.py`.
+- Cobertura de testes para diagnósticos de saúde, catálogo de FAQ, validação de payload, streaming SSE, modo síncrono e tratamento de indisponibilidade do Ollama.
+
+---
+
 ## [2.0.0] — 2026-11-23
 
 ### 🏛️ Governança Arquitetural

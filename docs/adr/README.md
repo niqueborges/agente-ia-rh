@@ -26,6 +26,7 @@ Este diretório contém os **Architecture Decision Records (ADRs)** que formaliz
 | [ADR-0003](0003-formatacao-contexto-lcel.md) | Formatação Estrita do Contexto na Chain LCEL | **Aprovada** | Introduz função pura `formatar_documentos` para extrair estritamente `page_content`, evitando vazamento de objetos `Document` no prompt. |
 | [ADR-0004](0004-persistencia-faiss.md) | Persistência Controlada do Índice FAISS | **Aprovada** | Implementa persistência local com manifesto `manifest.json`, fronteira de confiança para `pickle` e estratégia segura de substituição em Linux. |
 | [ADR-0005](0005-dependencias-e-compatibilidade.md) | Governança de Dependências e Compatibilidade | **Aprovada** | Define execução nativa em `.venv` como principal, fixa matriz candidata com `streamlit>=1.59.0` e condiciona remoção de `langchain-openai`. |
+| [ADR-0006](0006-desacoplamento-api-frontend.md) | Desacoplamento do Backend via API REST/SSE e Frontend Intranet | **Aprovada** | Introduz camada de API FastAPI com streaming SSE e frontend corporativo desacoplado para usuários leigos e integração por terceiros. |
 
 ---
 
@@ -35,11 +36,12 @@ As decisões de arquitetura da V2 possuem dependências conceituais diretas:
 
 ```mermaid
 flowchart TD
-    ADR0005["ADR-0005: Governança de Dependências<br/>(Ambiente .venv, Streamlit >= 1.59, LangChain, FAISS)"]
+    ADR0005["ADR-0005: Governança de Dependências<br/>(Ambiente .venv, Streamlit >= 1.59, FastAPI, LangChain, FAISS)"]
     ADR0001["ADR-0001: Resolução de Conectividade<br/>(URL base do Ollama no Host)"]
     ADR0002["ADR-0002: Catálogo de Modelos<br/>(Separação Chat vs Embeddings)"]
     ADR0004["ADR-0004: Persistência FAISS<br/>(Índice Local + Manifesto JSON)"]
     ADR0003["ADR-0003: Formatação LCEL<br/>(Limpeza do Contexto para Prompt)"]
+    ADR0006["ADR-0006: Desacoplamento API & Frontend<br/>(FastAPI REST/SSE + Frontend Intranet & Widget)"]
 
     ADR0005 --> ADR0001
     ADR0005 --> ADR0004
@@ -47,6 +49,7 @@ flowchart TD
     ADR0002 -->|Define modelo de embeddings| ADR0004
     ADR0002 -->|Define modelo de chat| ADR0003
     ADR0004 -->|Fornece trechos recuperados| ADR0003
+    ADR0003 -->|Alimenta pipeline RAG| ADR0006
 ```
 
 - **ADR-0001** define a URL resolvida de forma determinística, utilizada pela **ADR-0002** para consultar a API de tags.
@@ -86,7 +89,7 @@ A execução do planejamento está estruturada em três etapas progressivas e or
 
 Para manter o foco, a simplicidade de manutenção e o respeito aos requisitos essenciais, os seguintes componentes estão expressamente fora do escopo da V2:
 
-1. **FastAPI ou Separação em Microsserviços:** Desnecessário para uso interativo unificado; o Streamlit atende como frontend e orquestrador de sessão.
+1. **Separação em Microsserviços Complexos ou Service Mesh:** Embora a ADR-0006 introduza uma camada de API REST/SSE leve com FastAPI para permitir consumo headless e frontend desacoplado para a intranet, a solução mantém-se como um monólito modular simples, sem orquestração distribuída ou Kubernetes.
 2. **LangGraph ou Orquestração Multiagente:** Desnecessário para consulta documental factual direta; grafos de decisão aumentam a complexidade sem benefício comprovado neste estágio.
 3. **Bancos Vetoriais Externos (PostgreSQL/PgVector, Qdrant, Milvus):** Injustificado para o volume de manuais internos de demonstração; FAISS local atende com alta velocidade e baixo consumo de recursos.
 4. **Serviços de Nuvem ou Modelos Proprietários:** Contraria o requisito de privacidade estrita e operação 100% local.
