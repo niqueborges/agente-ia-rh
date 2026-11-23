@@ -1,14 +1,27 @@
 """
-Assistente RAG de Políticas Internas (RH)
+Assistente RAG de Políticas Internas (RH) — Versão 2.0
 Aplicação interativa desenvolvida com Streamlit e LangChain.
+Implementa governança de dependências (ADR-0005), conectividade determinística (ADR-0001),
+catálogo dinâmico (ADR-0002), formatação de contexto LCEL (ADR-0003) e persistência FAISS (ADR-0004).
 """
+
+from __future__ import annotations
 
 import streamlit as st
 from dotenv import load_dotenv
 
-from rag.ollama_client import obter_url_ollama, obter_embeddings, obter_llm
-from rag.ingest import carregar_e_indexar_pdf
 from rag.chain import criar_chain_rag
+from rag.ingest import carregar_ou_criar_indice
+from rag.ollama_client import (
+    MODELO_CHAT_PADRAO,
+    MODELO_EMBEDDINGS_PADRAO,
+    OllamaConfigurationError,
+    listar_modelos_chat,
+    obter_embeddings,
+    obter_llm,
+    obter_url_ollama,
+    verificar_conexao_ollama,
+)
 
 load_dotenv()
 
@@ -25,39 +38,70 @@ st.title("💼 Assistente de RH — Políticas Internas")
 st.caption("Consulte informações sobre benefícios, férias, jornada e políticas da empresa (100% local e privado).")
 
 # ==========================================
-# Inicialização dos Recursos (Cache)
+# Verificação de Conectividade do Ollama (ADR-0001)
 # ==========================================
-@st.cache_resource(show_spinner="Indexando documento PDF no banco vetorial...")
-def carregar_recursos():
-    """Inicializa os embeddings e o banco vetorial FAISS com cache de recurso."""
+try:
     url_ollama = obter_url_ollama()
-    embeddings = obter_embeddings(base_url=url_ollama)
-    banco_vetores = carregar_e_indexar_pdf(
+except OllamaConfigurationError as exc:
+    st.error(f"❌ **Erro de Configuração do Ollama:** {exc}")
+    st.info("Verifique a variável de ambiente `OLLAMA_BASE_URL` ou mantenha o padrão `http://127.0.0.1:11434`.")
+    st.stop()
+
+if not verificar_conexao_ollama(url_ollama, timeout=1.5):
+    st.error(
+        f"❌ **Servidor Ollama indisponível em `{url_ollama}`.**\n\n"
+        "Certifique-se de que o serviço está ativo no sistema executando:\n"
+        "```bash\nsudo systemctl status ollama\n```"
+    )
+    st.stop()
+
+
+# ==========================================
+# Inicialização dos Recursos Vetoriais (ADR-0004)
+# ==========================================
+@st.cache_resource(show_spinner="Carregando índice vetorial FAISS...")
+def carregar_recursos(base_url: str):
+    """Inicializa os embeddings e o índice vetorial FAISS com cache de recurso e persistência atômica."""
+    embeddings = obter_embeddings(base_url=base_url)
+    banco_vetores = carregar_ou_criar_indice(
         caminho_pdf="data/politica_rh_exemplo.pdf",
         embeddings=embeddings,
     )
-    return banco_vetores, url_ollama
+    return banco_vetores
+
+
+try:
+    banco_vetores = carregar_recursos(url_ollama)
+except Exception as exc:
+    st.error(f"❌ **Erro ao inicializar o banco vetorial FAISS:** {exc}")
+    st.stop()
 
 
 # ==========================================
-# Barra Lateral (Configurações)
+# Barra Lateral (Catálogo Dinâmico e Controles) (ADR-0002)
 # ==========================================
 with st.sidebar:
     st.header("⚙️ Configurações")
-    
-    modelos_disponiveis = [
-        "mistral:7b",
-        "qwen2.5-coder:7b",
-        "qwen3:4b",
-        "neural-chat:7b",
-        "qwen2.5-coder:1.5b",
-    ]
-    
+
+    modelos_chat = listar_modelos_chat(base_url=url_ollama)
+    if not modelos_chat:
+        st.error(
+            "Nenhum modelo conversacional detectado no Ollama.\n\n"
+            "Instale o modelo padrão recomendado executando:\n"
+            "```bash\nollama pull qwen3.5:4b\n```"
+        )
+        st.stop()
+
+    # Seleciona o modelo padrão provisório se estiver disponível
+    indice_padrao = 0
+    if MODELO_CHAT_PADRAO in modelos_chat:
+        indice_padrao = modelos_chat.index(MODELO_CHAT_PADRAO)
+
     modelo_selecionado = st.selectbox(
         "Modelo de Linguagem (LLM):",
-        options=modelos_disponiveis,
-        index=0,
-        help="Modelos locais executados através do Ollama.",
+        options=modelos_chat,
+        index=indice_padrao,
+        help="Modelos conversacionais detectados dinamicamente no Ollama local.",
     )
 
     temperatura = st.slider(
@@ -69,22 +113,46 @@ with st.sidebar:
         help="Valores mais baixos geram respostas mais diretas e factuais.",
     )
 
-    banco_vetores, url_detectada = carregar_recursos()
+    k_documentos = st.slider(
+        "Trechos recuperados ($k$):",
+        min_value=1,
+        max_value=5,
+        value=3,
+        step=1,
+        help="Quantidade de fatias mais relevantes recuperadas do PDF.",
+    )
 
     st.divider()
-    st.markdown(f"**Embeddings:** `nomic-embed-text`")
-    st.markdown(f"**Ollama Host:** `{url_detectada}`")
+    st.markdown(f"**Embeddings:** `{MODELO_EMBEDDINGS_PADRAO}`")
+    st.markdown(f"**Ollama Host:** `{url_ollama}`")
+    st.markdown(f"**Fatias no Índice:** `{banco_vetores.index.ntotal}`")
 
-    if st.button("🗑️ Limpar conversa", width="stretch"):
-        st.session_state["messages"] = []
-        st.rerun()
+    col_btn1, col_btn2 = st.columns(2)
+    with col_btn1:
+        if st.button("🗑️ Limpar chat", width="stretch"):
+            st.session_state["messages"] = []
+            st.rerun()
+    with col_btn2:
+        if st.button("🔄 Reindexar", width="stretch", help="Força a recriação do índice FAISS a partir do PDF."):
+            st.cache_resource.clear()
+            carregar_ou_criar_indice(
+                caminho_pdf="data/politica_rh_exemplo.pdf",
+                embeddings=obter_embeddings(base_url=url_ollama),
+                forcar_reindexacao=True,
+            )
+            st.success("Índice reindexado com sucesso!")
+            st.rerun()
 
-# Inicializa a Chain RAG com o modelo selecionado
-llm = obter_llm(model=modelo_selecionado, temperature=temperatura, base_url=url_detectada)
-chain = criar_chain_rag(banco_vetores=banco_vetores, llm=llm, k_documentos=3)
 
 # ==========================================
-# Interface de Chat
+# Inicialização da Chain RAG (ADR-0003)
+# ==========================================
+llm = obter_llm(model=modelo_selecionado, temperature=temperatura, base_url=url_ollama)
+chain = criar_chain_rag(banco_vetores=banco_vetores, llm=llm, k_documentos=k_documentos)
+
+
+# ==========================================
+# Interface de Chat Interativo
 # ==========================================
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
@@ -93,14 +161,25 @@ if "messages" not in st.session_state:
 for msg in st.session_state["messages"]:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
+        if "sources" in msg and msg["sources"]:
+            with st.expander("📄 Trechos consultados"):
+                for idx, src in enumerate(msg["sources"], start=1):
+                    st.markdown(f"**Trecho {idx} (Página {src.get('page', '?')}):**\n>{src.get('text', '')}")
 
 # Processamento da entrada do usuário
 prompt = st.chat_input("Pergunte sobre as políticas da empresa...", submit_mode="disable")
 if prompt:
-    # Registra e exibe a mensagem do usuário
+    # Registra e exibe a pergunta
     st.session_state["messages"].append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
+
+    # Recupera trechos para rastreabilidade de fontes
+    docs_recuperados = banco_vetores.similarity_search(prompt, k=k_documentos)
+    fontes = [
+        {"page": doc.metadata.get("page", 0) + 1, "text": doc.page_content.strip()}
+        for doc in docs_recuperados
+    ]
 
     # Gera e exibe a resposta com streaming
     with st.chat_message("assistant"):
@@ -108,4 +187,8 @@ if prompt:
             stream_generator = chain.stream(prompt)
             resposta = st.write_stream(stream_generator)
 
-    st.session_state["messages"].append({"role": "assistant", "content": resposta})
+        with st.expander("📄 Trechos consultados"):
+            for idx, src in enumerate(fontes, start=1):
+                st.markdown(f"**Trecho {idx} (Página {src['page']}):**\n>{src['text']}")
+
+    st.session_state["messages"].append({"role": "assistant", "content": resposta, "sources": fontes})
