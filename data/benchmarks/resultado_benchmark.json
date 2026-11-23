@@ -1,0 +1,606 @@
+{
+  "qwen3.5:4b": {
+    "resumo": {
+      "total_perguntas": 15,
+      "perguntas_positivas": 12,
+      "perguntas_negativas": 3,
+      "context_hit_rate_at_3": 91.7,
+      "aderencia_gabarito_pct": 38.9,
+      "taxa_recusa_negativa_pct": 0.0,
+      "tempo_medio_geracao_s": 163.4,
+      "throughput_tokens_seg": 0.2
+    },
+    "detalhes": [
+      {
+        "id": "q01_horario_flexivel",
+        "tempo_recuperacao_s": 0.8123,
+        "tempo_geracao_s": 164.76,
+        "tokens_estimados": 154,
+        "recuperacao": {
+          "hit": true,
+          "posicao": 1,
+          "paginas_recuperadas": [
+            1,
+            1,
+            1
+          ]
+        },
+        "geracao": {
+          "aderencia": 1.0,
+          "recusa_correta": null
+        },
+        "resposta_preview": "De acordo com o **Capítulo 1 — Jornada de Trabalho e Frequência** do Manual de Políticas Internas da Nexus Tecnologia S.A., a resposta é:  **Quem pode optar pel"
+      },
+      {
+        "id": "q02_auxilio_home_office",
+        "tempo_recuperacao_s": 0.1114,
+        "tempo_geracao_s": 148.91,
+        "tokens_estimados": 78,
+        "recuperacao": {
+          "hit": true,
+          "posicao": 1,
+          "paginas_recuperadas": [
+            1,
+            1,
+            7
+          ]
+        },
+        "geracao": {
+          "aderencia": 1.0,
+          "recusa_correta": null
+        },
+        "resposta_preview": "De acordo com as políticas internas da empresa, os valores do auxílio home office são:  *   **Regime Híbrido:** R$ 200,00 mensais. *   **Regime 100% Remoto:** R"
+      },
+      {
+        "id": "q03_banco_de_horas",
+        "tempo_recuperacao_s": 0.1024,
+        "tempo_geracao_s": 152.38,
+        "tokens_estimados": 94,
+        "recuperacao": {
+          "hit": true,
+          "posicao": 1,
+          "paginas_recuperadas": [
+            1,
+            1,
+            2
+          ]
+        },
+        "geracao": {
+          "aderencia": 1.0,
+          "recusa_correta": null
+        },
+        "resposta_preview": "Com base nas políticas internas da empresa, especificamente na seção **1.4 Banco de Horas**, as informações solicitadas são:  *   **Limite máximo de acumulação:"
+      },
+      {
+        "id": "q04_programa_plr",
+        "tempo_recuperacao_s": 0.0686,
+        "tempo_geracao_s": 161.04,
+        "tokens_estimados": 0,
+        "recuperacao": {
+          "hit": true,
+          "posicao": 1,
+          "paginas_recuperadas": [
+            3,
+            5,
+            7
+          ]
+        },
+        "geracao": {
+          "aderencia": 0.0,
+          "recusa_correta": null
+        },
+        "resposta_preview": ""
+      },
+      {
+        "id": "q05_regras_ferias",
+        "tempo_recuperacao_s": 0.0732,
+        "tempo_geracao_s": 165.35,
+        "tokens_estimados": 0,
+        "recuperacao": {
+          "hit": true,
+          "posicao": 3,
+          "paginas_recuperadas": [
+            2,
+            8,
+            3
+          ]
+        },
+        "geracao": {
+          "aderencia": 0.0,
+          "recusa_correta": null
+        },
+        "resposta_preview": ""
+      },
+      {
+        "id": "q06_reembolso_despesas",
+        "tempo_recuperacao_s": 0.0869,
+        "tempo_geracao_s": 122.04,
+        "tokens_estimados": 83,
+        "recuperacao": {
+          "hit": true,
+          "posicao": 1,
+          "paginas_recuperadas": [
+            4,
+            4,
+            5
+          ]
+        },
+        "geracao": {
+          "aderencia": 0.67,
+          "recusa_correta": null
+        },
+        "resposta_preview": "De acordo com a **Política de Reembolso (seção 4.1)** das políticas internas da empresa, as informações solicitadas são:  *   **Prazo para solicitação:** O cola"
+      },
+      {
+        "id": "q07_politica_brindes",
+        "tempo_recuperacao_s": 0.0511,
+        "tempo_geracao_s": 180.43,
+        "tokens_estimados": 0,
+        "recuperacao": {
+          "hit": false,
+          "posicao": null,
+          "paginas_recuperadas": [
+            2,
+            2,
+            2
+          ]
+        },
+        "geracao": {
+          "aderencia": 0.0,
+          "recusa_correta": null
+        },
+        "resposta_preview": ""
+      },
+      {
+        "id": "q08_seguranca_senhas",
+        "tempo_recuperacao_s": 0.1428,
+        "tempo_geracao_s": 179.11,
+        "tokens_estimados": 0,
+        "recuperacao": {
+          "hit": true,
+          "posicao": 1,
+          "paginas_recuperadas": [
+            5,
+            7,
+            5
+          ]
+        },
+        "geracao": {
+          "aderencia": 0.0,
+          "recusa_correta": null
+        },
+        "resposta_preview": ""
+      },
+      {
+        "id": "q09_subsidio_educacao",
+        "tempo_recuperacao_s": 0.1357,
+        "tempo_geracao_s": 188.84,
+        "tokens_estimados": 0,
+        "recuperacao": {
+          "hit": true,
+          "posicao": 1,
+          "paginas_recuperadas": [
+            6,
+            8,
+            2
+          ]
+        },
+        "geracao": {
+          "aderencia": 0.0,
+          "recusa_correta": null
+        },
+        "resposta_preview": ""
+      },
+      {
+        "id": "q10_nexus_wellness",
+        "tempo_recuperacao_s": 0.0596,
+        "tempo_geracao_s": 172.56,
+        "tokens_estimados": 0,
+        "recuperacao": {
+          "hit": true,
+          "posicao": 1,
+          "paginas_recuperadas": [
+            7,
+            6,
+            7
+          ]
+        },
+        "geracao": {
+          "aderencia": 0.0,
+          "recusa_correta": null
+        },
+        "resposta_preview": ""
+      },
+      {
+        "id": "q11_aviso_previo_demissao",
+        "tempo_recuperacao_s": 0.0847,
+        "tempo_geracao_s": 139.35,
+        "tokens_estimados": 102,
+        "recuperacao": {
+          "hit": true,
+          "posicao": 1,
+          "paginas_recuperadas": [
+            7,
+            7,
+            7
+          ]
+        },
+        "geracao": {
+          "aderencia": 1.0,
+          "recusa_correta": null
+        },
+        "resposta_preview": "De acordo com as políticas internas da empresa, especificamente no **Capítulo 10 — Desligamento**, a resposta é:  *   **Prazo de aviso prévio:** O colaborador d"
+      },
+      {
+        "id": "q12_clausula_nao_concorrencia",
+        "tempo_recuperacao_s": 0.0837,
+        "tempo_geracao_s": 164.13,
+        "tokens_estimados": 0,
+        "recuperacao": {
+          "hit": true,
+          "posicao": 1,
+          "paginas_recuperadas": [
+            8,
+            4,
+            8
+          ]
+        },
+        "geracao": {
+          "aderencia": 0.0,
+          "recusa_correta": null
+        },
+        "resposta_preview": ""
+      },
+      {
+        "id": "q13_controle_auxilio_pet",
+        "tempo_recuperacao_s": 0.1876,
+        "tempo_geracao_s": 171.51,
+        "tokens_estimados": 0,
+        "recuperacao": {
+          "hit": true,
+          "posicao": null,
+          "paginas_recuperadas": []
+        },
+        "geracao": {
+          "aderencia": 0.0,
+          "recusa_correta": false
+        },
+        "resposta_preview": ""
+      },
+      {
+        "id": "q14_controle_emprestimo_consignado",
+        "tempo_recuperacao_s": 0.1323,
+        "tempo_geracao_s": 177.26,
+        "tokens_estimados": 0,
+        "recuperacao": {
+          "hit": true,
+          "posicao": null,
+          "paginas_recuperadas": []
+        },
+        "geracao": {
+          "aderencia": 0.0,
+          "recusa_correta": false
+        },
+        "resposta_preview": ""
+      },
+      {
+        "id": "q15_controle_veiculo_empresa",
+        "tempo_recuperacao_s": 0.0859,
+        "tempo_geracao_s": 163.35,
+        "tokens_estimados": 0,
+        "recuperacao": {
+          "hit": true,
+          "posicao": null,
+          "paginas_recuperadas": []
+        },
+        "geracao": {
+          "aderencia": 0.0,
+          "recusa_correta": false
+        },
+        "resposta_preview": ""
+      }
+    ]
+  },
+  "llama3.1:8b": {
+    "resumo": {
+      "total_perguntas": 15,
+      "perguntas_positivas": 12,
+      "perguntas_negativas": 3,
+      "context_hit_rate_at_3": 91.7,
+      "aderencia_gabarito_pct": 70.2,
+      "taxa_recusa_negativa_pct": 100.0,
+      "tempo_medio_geracao_s": 51.53,
+      "throughput_tokens_seg": 1.6
+    },
+    "detalhes": [
+      {
+        "id": "q01_horario_flexivel",
+        "tempo_recuperacao_s": 0.1408,
+        "tempo_geracao_s": 74.54,
+        "tokens_estimados": 127,
+        "recuperacao": {
+          "hit": true,
+          "posicao": 1,
+          "paginas_recuperadas": [
+            1,
+            1,
+            1
+          ]
+        },
+        "geracao": {
+          "aderencia": 1.0,
+          "recusa_correta": null
+        },
+        "resposta_preview": "De acordo com o Manual de Políticas Internas da Empresa Nexus Tecnologia S.A., as áreas que podem optar pelo regime de horário flexível são:  * Tecnologia * Pro"
+      },
+      {
+        "id": "q02_auxilio_home_office",
+        "tempo_recuperacao_s": 0.0874,
+        "tempo_geracao_s": 42.83,
+        "tokens_estimados": 41,
+        "recuperacao": {
+          "hit": true,
+          "posicao": 1,
+          "paginas_recuperadas": [
+            1,
+            1,
+            7
+          ]
+        },
+        "geracao": {
+          "aderencia": 1.0,
+          "recusa_correta": null
+        },
+        "resposta_preview": "De acordo com as políticas internas da empresa, o auxílio home office para colaboradores em regime híbrido é de R$ 200,00 e para colaboradores em regime 100% re"
+      },
+      {
+        "id": "q03_banco_de_horas",
+        "tempo_recuperacao_s": 0.1238,
+        "tempo_geracao_s": 29.13,
+        "tokens_estimados": 53,
+        "recuperacao": {
+          "hit": true,
+          "posicao": 1,
+          "paginas_recuperadas": [
+            1,
+            1,
+            2
+          ]
+        },
+        "geracao": {
+          "aderencia": 1.0,
+          "recusa_correta": null
+        },
+        "resposta_preview": "De acordo com as políticas internas da empresa, o limite máximo de horas que podem ser acumuladas no banco de horas é de 40 horas positivas ou 20 horas negativa"
+      },
+      {
+        "id": "q04_programa_plr",
+        "tempo_recuperacao_s": 0.0588,
+        "tempo_geracao_s": 52.32,
+        "tokens_estimados": 76,
+        "recuperacao": {
+          "hit": true,
+          "posicao": 1,
+          "paginas_recuperadas": [
+            3,
+            5,
+            7
+          ]
+        },
+        "geracao": {
+          "aderencia": 1.0,
+          "recusa_correta": null
+        },
+        "resposta_preview": "O programa de Participação nos Lucros e Resultados (PLR) da empresa pode atingir até 2 salários por ano, sendo 60% baseado em metas individuais e 40% em metas c"
+      },
+      {
+        "id": "q05_regras_ferias",
+        "tempo_recuperacao_s": 0.2046,
+        "tempo_geracao_s": 34.88,
+        "tokens_estimados": 23,
+        "recuperacao": {
+          "hit": true,
+          "posicao": 3,
+          "paginas_recuperadas": [
+            2,
+            8,
+            3
+          ]
+        },
+        "geracao": {
+          "aderencia": 0.0,
+          "recusa_correta": null
+        },
+        "resposta_preview": "Infelizmente, não encontrei informações sobre a solicitação de férias e a divisão delas em parcelas no contexto fornecido."
+      },
+      {
+        "id": "q06_reembolso_despesas",
+        "tempo_recuperacao_s": 0.1816,
+        "tempo_geracao_s": 60.06,
+        "tokens_estimados": 96,
+        "recuperacao": {
+          "hit": true,
+          "posicao": 1,
+          "paginas_recuperadas": [
+            4,
+            4,
+            5
+          ]
+        },
+        "geracao": {
+          "aderencia": 0.67,
+          "recusa_correta": null
+        },
+        "resposta_preview": "De acordo com a política de reembolso da empresa, o colaborador deve solicitar reembolso de despesas corporativas no formulário eletrônico no portal do RH em at"
+      },
+      {
+        "id": "q07_politica_brindes",
+        "tempo_recuperacao_s": 0.0927,
+        "tempo_geracao_s": 36.88,
+        "tokens_estimados": 29,
+        "recuperacao": {
+          "hit": false,
+          "posicao": null,
+          "paginas_recuperadas": [
+            2,
+            2,
+            2
+          ]
+        },
+        "geracao": {
+          "aderencia": 0.0,
+          "recusa_correta": null
+        },
+        "resposta_preview": "Infelizmente, não encontrei nenhuma informação nas políticas internas da empresa sobre o valor máximo permitido para aceitação de brindes e presentes por colabo"
+      },
+      {
+        "id": "q08_seguranca_senhas",
+        "tempo_recuperacao_s": 0.0841,
+        "tempo_geracao_s": 76.55,
+        "tokens_estimados": 154,
+        "recuperacao": {
+          "hit": true,
+          "posicao": 1,
+          "paginas_recuperadas": [
+            5,
+            7,
+            5
+          ]
+        },
+        "geracao": {
+          "aderencia": 1.0,
+          "recusa_correta": null
+        },
+        "resposta_preview": "De acordo com a política de segurança da informação da empresa, as regras corporativas para criação e expiração de senhas de acesso aos sistemas são as seguinte"
+      },
+      {
+        "id": "q09_subsidio_educacao",
+        "tempo_recuperacao_s": 0.1109,
+        "tempo_geracao_s": 82.09,
+        "tokens_estimados": 234,
+        "recuperacao": {
+          "hit": true,
+          "posicao": 1,
+          "paginas_recuperadas": [
+            6,
+            8,
+            2
+          ]
+        },
+        "geracao": {
+          "aderencia": 0.25,
+          "recusa_correta": null
+        },
+        "resposta_preview": "A política de incentivo à educação e cursos de pós-graduação da Nexus Tecnologia S.A. é descrita na seção 2.6 do manual de políticas internas da empresa.  De ac"
+      },
+      {
+        "id": "q10_nexus_wellness",
+        "tempo_recuperacao_s": 0.0615,
+        "tempo_geracao_s": 61.32,
+        "tokens_estimados": 111,
+        "recuperacao": {
+          "hit": true,
+          "posicao": 1,
+          "paginas_recuperadas": [
+            7,
+            6,
+            7
+          ]
+        },
+        "geracao": {
+          "aderencia": 1.0,
+          "recusa_correta": null
+        },
+        "resposta_preview": "O programa Nexus Wellness oferece os seguintes benefícios:  - Auxílio academia ou atividade física no valor de R$ 150,00 por mês (mediante comprovante de frequê"
+      },
+      {
+        "id": "q11_aviso_previo_demissao",
+        "tempo_recuperacao_s": 0.1629,
+        "tempo_geracao_s": 47.17,
+        "tokens_estimados": 45,
+        "recuperacao": {
+          "hit": true,
+          "posicao": 1,
+          "paginas_recuperadas": [
+            7,
+            7,
+            7
+          ]
+        },
+        "geracao": {
+          "aderencia": 0.5,
+          "recusa_correta": null
+        },
+        "resposta_preview": "De acordo com as políticas internas da empresa, o prazo de comunicação prévia em caso de pedido de demissão pelo colaborador é de 30 dias, podendo ser trabalhad"
+      },
+      {
+        "id": "q12_clausula_nao_concorrencia",
+        "tempo_recuperacao_s": 0.1916,
+        "tempo_geracao_s": 58.99,
+        "tokens_estimados": 93,
+        "recuperacao": {
+          "hit": true,
+          "posicao": 1,
+          "paginas_recuperadas": [
+            8,
+            4,
+            8
+          ]
+        },
+        "geracao": {
+          "aderencia": 1.0,
+          "recusa_correta": null
+        },
+        "resposta_preview": "De acordo com a política interna da empresa, os colaboradores de nível Sênior, Especialista e Gestor que tenham tido acesso a informações estratégicas podem est"
+      },
+      {
+        "id": "q13_controle_auxilio_pet",
+        "tempo_recuperacao_s": 0.0781,
+        "tempo_geracao_s": 40.35,
+        "tokens_estimados": 29,
+        "recuperacao": {
+          "hit": true,
+          "posicao": null,
+          "paginas_recuperadas": []
+        },
+        "geracao": {
+          "aderencia": 0.0,
+          "recusa_correta": true
+        },
+        "resposta_preview": "Infelizmente, não encontrei nenhuma informação sobre o auxílio-pet oferecido pela empresa para vacinação e cuidados de animais domésticos nas políticas internas"
+      },
+      {
+        "id": "q14_controle_emprestimo_consignado",
+        "tempo_recuperacao_s": 0.094,
+        "tempo_geracao_s": 44.69,
+        "tokens_estimados": 65,
+        "recuperacao": {
+          "hit": true,
+          "posicao": null,
+          "paginas_recuperadas": []
+        },
+        "geracao": {
+          "aderencia": 0.0,
+          "recusa_correta": true
+        },
+        "resposta_preview": "Infelizmente, não encontrei nenhuma informação sobre o empréstimo consignado com desconto em folha oferecido diretamente pela Nexus aos colaboradores nas políti"
+      },
+      {
+        "id": "q15_controle_veiculo_empresa",
+        "tempo_recuperacao_s": 0.0887,
+        "tempo_geracao_s": 31.07,
+        "tokens_estimados": 31,
+        "recuperacao": {
+          "hit": true,
+          "posicao": null,
+          "paginas_recuperadas": []
+        },
+        "geracao": {
+          "aderencia": 0.0,
+          "recusa_correta": true
+        },
+        "resposta_preview": "Infelizmente, não encontrei nenhuma informação nas políticas internas da empresa que mencione o direito a carro corporativo para uso pessoal aos finais de seman"
+      }
+    ]
+  }
+}

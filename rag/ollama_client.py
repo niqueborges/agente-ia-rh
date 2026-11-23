@@ -249,8 +249,9 @@ def obter_llm(
     model: str | None = None,
     temperature: float = 0.2,
     base_url: str | None = None,
+    num_ctx: int = 2048,
 ) -> ChatOllama:
-    """Retorna uma instância de ChatOllama configurada."""
+    """Retorna uma instância de ChatOllama configurada com janela de contexto segura para CPU."""
     url = base_url or obter_url_ollama()
     modelo = model or os.getenv("OLLAMA_CHAT_MODEL", MODELO_CHAT_PADRAO)
-    return ChatOllama(model=modelo, base_url=url, temperature=temperature)
+    return ChatOllama(model=modelo, base_url=url, temperature=temperature, num_ctx=num_ctx)

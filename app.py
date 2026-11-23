@@ -92,9 +92,11 @@ with st.sidebar:
         )
         st.stop()
 
-    # Seleciona o modelo padrão provisório se estiver disponível
+    # Seleciona o modelo recomendado com base no benchmark empírico (Etapa 3)
     indice_padrao = 0
-    if MODELO_CHAT_PADRAO in modelos_chat:
+    if "llama3.1:8b" in modelos_chat:
+        indice_padrao = modelos_chat.index("llama3.1:8b")
+    elif MODELO_CHAT_PADRAO in modelos_chat:
         indice_padrao = modelos_chat.index(MODELO_CHAT_PADRAO)
 
     modelo_selecionado = st.selectbox(

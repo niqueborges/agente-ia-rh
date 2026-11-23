@@ -1,0 +1,122 @@
+[
+  {
+    "id": "q01_horario_flexivel",
+    "pergunta": "Quem pode optar pelo regime de horário flexível e quais são as condições?",
+    "capitulo_esperado": "1.2",
+    "pagina_esperada": 1,
+    "palavras_chave_gabarito": ["Tecnologia", "Produto", "Design", "8 horas", "10h às 16h", "core"],
+    "espera_recusa": false
+  },
+  {
+    "id": "q02_auxilio_home_office",
+    "pergunta": "Qual o valor do auxílio home office para colaboradores em regime híbrido e remoto?",
+    "capitulo_esperado": "1.3.2",
+    "pagina_esperada": 1,
+    "palavras_chave_gabarito": ["200", "350", "híbrido", "remoto"],
+    "espera_recusa": false
+  },
+  {
+    "id": "q03_banco_de_horas",
+    "pergunta": "Qual é o limite máximo de horas que podem ser acumuladas no banco de horas e qual o prazo para compensação?",
+    "capitulo_esperado": "1.4",
+    "pagina_esperada": 1,
+    "palavras_chave_gabarito": ["40 horas", "20 horas", "90 dias"],
+    "espera_recusa": false
+  },
+  {
+    "id": "q04_programa_plr",
+    "pergunta": "Como funciona o programa de PLR da empresa e em quantas parcelas ele é pago?",
+    "capitulo_esperado": "2.10",
+    "pagina_esperada": 3,
+    "palavras_chave_gabarito": ["2 salários", "60%", "40%", "março", "setembro"],
+    "espera_recusa": false
+  },
+  {
+    "id": "q05_regras_ferias",
+    "pergunta": "Com quanta antecedência o colaborador deve solicitar suas férias e em quantas parcelas elas podem ser divididas?",
+    "capitulo_esperado": "3.1",
+    "pagina_esperada": 3,
+    "palavras_chave_gabarito": ["60 dias", "3 períodos", "14 dias", "5 dias"],
+    "espera_recusa": false
+  },
+  {
+    "id": "q06_reembolso_despesas",
+    "pergunta": "Qual o prazo para solicitar reembolso de despesas corporativas e em quanto tempo o valor é pago após aprovação?",
+    "capitulo_esperado": "4.1",
+    "pagina_esperada": 4,
+    "palavras_chave_gabarito": ["30 dias", "10 dias úteis", "comprovantes"],
+    "espera_recusa": false
+  },
+  {
+    "id": "q07_politica_brindes",
+    "pergunta": "Qual é o valor máximo permitido para aceitação de brindes e presentes por colaboradores?",
+    "capitulo_esperado": "5.3",
+    "pagina_esperada": 5,
+    "palavras_chave_gabarito": ["100", "comitê de ética"],
+    "espera_recusa": false
+  },
+  {
+    "id": "q08_seguranca_senhas",
+    "pergunta": "Quais são as regras corporativas para criação e expiração de senhas de acesso aos sistemas?",
+    "capitulo_esperado": "6.1",
+    "pagina_esperada": 5,
+    "palavras_chave_gabarito": ["12 caracteres", "90 dias", "2FA"],
+    "espera_recusa": false
+  },
+  {
+    "id": "q09_subsidio_educacao",
+    "pergunta": "Como funciona a política de incentivo à educação e cursos de pós-graduação?",
+    "capitulo_esperado": "7.2",
+    "pagina_esperada": 6,
+    "palavras_chave_gabarito": ["1 ano", "50%", "1.000", "12 meses"],
+    "espera_recusa": false
+  },
+  {
+    "id": "q10_nexus_wellness",
+    "pergunta": "Quais benefícios são oferecidos pelo programa Nexus Wellness?",
+    "capitulo_esperado": "9.3",
+    "pagina_esperada": 7,
+    "palavras_chave_gabarito": ["150", "academia", "terapia", "aniversário"],
+    "espera_recusa": false
+  },
+  {
+    "id": "q11_aviso_previo_demissao",
+    "pergunta": "Qual o prazo de comunicação prévia em caso de pedido de demissão pelo colaborador?",
+    "capitulo_esperado": "10.1",
+    "pagina_esperada": 7,
+    "palavras_chave_gabarito": ["30 dias", "aviso prévio"],
+    "espera_recusa": false
+  },
+  {
+    "id": "q12_clausula_nao_concorrencia",
+    "pergunta": "Quem pode estar sujeito à cláusula de não concorrência após o desligamento e qual a compensação financeira?",
+    "capitulo_esperado": "10.5",
+    "pagina_esperada": 8,
+    "palavras_chave_gabarito": ["Sênior", "Especialista", "Gestor", "12 meses", "50%"],
+    "espera_recusa": false
+  },
+  {
+    "id": "q13_controle_auxilio_pet",
+    "pergunta": "Qual o valor do auxílio-pet oferecido pela empresa para vacinação e cuidados de animais domésticos?",
+    "capitulo_esperado": null,
+    "pagina_esperada": null,
+    "palavras_chave_gabarito": ["não encontrou", "não consta", "não foi encontrada", "não há"],
+    "espera_recusa": true
+  },
+  {
+    "id": "q14_controle_emprestimo_consignado",
+    "pergunta": "Como funciona o empréstimo consignado com desconto em folha oferecido diretamente pela Nexus aos colaboradores?",
+    "capitulo_esperado": null,
+    "pagina_esperada": null,
+    "palavras_chave_gabarito": ["não encontrou", "não consta", "não foi encontrada", "não há"],
+    "espera_recusa": true
+  },
+  {
+    "id": "q15_controle_veiculo_empresa",
+    "pergunta": "Quais colaboradores têm direito a carro corporativo da empresa para uso pessoal aos finais de semana?",
+    "capitulo_esperado": null,
+    "pagina_esperada": null,
+    "palavras_chave_gabarito": ["não encontrou", "não consta", "não foi encontrada", "não há"],
+    "espera_recusa": true
+  }
+]
