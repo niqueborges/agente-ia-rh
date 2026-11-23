@@ -253,7 +253,9 @@ Acesse a interface no navegador: `http://localhost:8501`.
 
 ---
 
-## 🧪 Executando os Testes Automatizados
+## 🧪 Executando os Testes e o Benchmark de Qualidade
+
+### 1. Suíte de Testes Automatizados (pytest)
 
 O projeto conta com uma suíte de 39 testes unitários e de integração cobrindo todas as camadas arquiteturais:
 
@@ -276,6 +278,16 @@ tests/test_ollama_client.py::TestValidacaoUrlOllama::test_url_sem_esquema_adicio
 ======================= 39 passed in 0.93s =======================
 ```
 
+### 2. Benchmark Sistemático de Qualidade (Etapa 3)
+
+Para reproduzir a avaliação comparativa de recuperação, fidelidade e latência na CPU entre os modelos:
+
+```bash
+python scripts/avaliar_rag.py
+```
+
+Os resultados detalhados são salvos em `data/benchmarks/resultado_benchmark.json` e documentados em [`docs/avaliacao-qualidade-etapa3.md`](docs/avaliacao-qualidade-etapa3.md).
+
 ---
 
 ## 🔒 Nota de Confidencialidade e Dados Fictícios
@@ -285,24 +297,26 @@ tests/test_ollama_client.py::TestValidacaoUrlOllama::test_url_sem_esquema_adicio
 
 ---
 
-## 📌 Status das Melhorias e Próximos Passos (Etapa 3)
+## 📌 Status das Fases e Próximas Fronteiras de Evolução
 
-Com a estabilização da V2 concluída, o projeto conta com as seguintes frentes implementadas e oportunidades futuras de evolução:
+Com a conclusão da estabilização da V2 e da avaliação empírica da Etapa 3, o status atual do projeto é:
 
-### Funcionalidades Entregues na V2
+### Entregas Concluídas (V2 + Etapa 3)
 - [x] **Conectividade Determinística e Resiliente:** Resolução e healthcheck sem dependência de comandos de shell externos ([ADR-0001](docs/adr/0001-resolucao-conectividade-ollama.md)).
 - [x] **Catálogo Dinâmico e Descoberta de Modelos:** Detecção de modelos no Ollama com separação entre geração e embeddings ([ADR-0002](docs/adr/0002-catalogo-modelos-ollama.md)).
 - [x] **Higiene do Prompt LCEL:** Formatação pura de contexto sem vazamento de objetos `Document` ([ADR-0003](docs/adr/0003-formatacao-contexto-lcel.md)).
 - [x] **Rastreabilidade de Fontes:** Exibição expansível na UI dos trechos e páginas consultadas ([ADR-0003](docs/adr/0003-formatacao-contexto-lcel.md)).
 - [x] **Persistência Atômica do Banco Vetorial:** Armazenamento em disco com `manifest.json`, sincronização `fsync`, travas `fcntl` e tolerância a falhas ([ADR-0004](docs/adr/0004-persistencia-faiss.md)).
 - [x] **Governança de Dependências:** Homologação sob Python 3.14 com 39 testes automatizados ([ADR-0005](docs/adr/0005-dependencias-e-compatibilidade.md)).
+- [x] **Curadoria do Golden Dataset:** 15 perguntas de referência cobrindo os 10 capítulos do manual e controles negativos ([data/golden_dataset.json](data/golden_dataset.json)).
+- [x] **Avaliação de Recuperação:** *Context Hit Rate @ 3* atingiu **91.7%**, comprovando alta eficácia da recuperação densa pura.
+- [x] **Benchmark Empírico de Modelos:** Comparação de latência, vazão e fidelidade na CPU entre `qwen3.5:4b` e `llama3.1:8b`, elegendo `llama3.1:8b` (`num_ctx=2048`) como padrão recomendado ([docs/avaliacao-qualidade-etapa3.md](docs/avaliacao-qualidade-etapa3.md)).
 
-### Próximos Passos (Etapa 3 — Avaliação Sistemática de Qualidade)
-- [ ] **Curadoria do Golden Dataset:** Criação de conjunto de 20 perguntas de referência em português com gabarito formal de respostas baseadas no manual da Nexus Tecnologia S.A.
-- [ ] **Avaliação Sistemática de Recuperação:** Medição de *Context Precision* e *Context Recall*.
-- [ ] **Benchmark Empírico de Modelos:** Comparação controlada de latência (tokens/s na CPU) e fidelidade (*Faithfulness*) entre `qwen3.5:4b` e `llama3.1:8b`.
-- [ ] **Filtros por Metadados:** Suporte à segmentação de políticas por departamento (e.g. RH vs Financeiro vs TI).
-- [ ] **Autenticação Corporativa (SSO):** Integração com OpenID Connect (OIDC) / Microsoft Entra ID para controle de acesso baseado em funções (RBAC).
+### Próximas Fronteiras de Evolução (Trabalhos Futuros Opcionais)
+- [ ] **Pipeline de CI/CD (GitHub Actions):** Automação de linting (Ruff) e testes (`pytest`) a cada push e pull request.
+- [ ] **Multi-Documentos e Segmentação por Metadados:** Suporte à ingestão simultânea de manuais de diferentes departamentos (RH, TI, Financeiro, Jurídico) com filtros por coleção.
+- [ ] **Autenticação Corporativa (SSO / OIDC):** Integração com Microsoft Entra ID / Okta para controle de acesso por perfil (RBAC).
+- [ ] **Banco Vetorial Gerenciado:** Avaliação de migração do FAISS para PgVector ou Qdrant caso o acervo documental ultrapasse centenas de arquivos.
 
 ---
 
