@@ -1,5 +1,5 @@
 """
-Endpoint de conversação e consulta RAG com suporte a streaming SSE (ADR-0006).
+Endpoint de conversação e consulta RAG com suporte a streaming SSE e blindagem de segurança (ADR-0006 e ADR-0007).
 """
 
 from __future__ import annotations
@@ -8,7 +8,7 @@ import json
 from collections.abc import Generator
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from langchain_community.vectorstores import FAISS
 
@@ -17,6 +17,13 @@ from rag.ingest import carregar_ou_criar_indice
 from rag.ollama_client import obter_llm, obter_url_ollama, verificar_conexao_ollama
 
 from ..schemas import ChatRequest, ChatResponse, SourceItem
+from ..security import (
+    concurrency_limiter,
+    extrair_ip_cliente,
+    rate_limiter,
+    validar_prompt_seguro,
+    verificar_autenticacao_opcional,
+)
 
 router = APIRouter()
 
@@ -60,6 +67,7 @@ def gerar_stream_sse(
 ) -> Generator[str, None, None]:
     """
     Executa a chain LCEL e transmite tokens e metadados via Server-Sent Events (SSE).
+    Garante a liberação do slot de concorrência no bloco finally.
     """
     try:
         url_ollama = obter_url_ollama()
@@ -99,6 +107,8 @@ def gerar_stream_sse(
         msg_erro = f"Ocorreu uma falha durante o processamento da consulta: {exc}"
         payload_erro = json.dumps({"type": "error", "message": msg_erro}, ensure_ascii=False)
         yield f"data: {payload_erro}\n\n"
+    finally:
+        concurrency_limiter.liberar()
 
 
 @router.post(
@@ -106,12 +116,81 @@ def gerar_stream_sse(
     response_model=ChatResponse,
     summary="Consulta ao Assistente de RH (Streaming SSE ou Síncrono)",
 )
-def consultar_chat(requisicao: ChatRequest):
+def consultar_chat(requisicao: ChatRequest, request: Request):
     """
     Recebe a pergunta do colaborador e responde consultando as políticas internas.
-    - Se `stream=true`: Retorna um fluxo contínuo de Server-Sent Events (`text/event-stream`).
-    - Se `stream=false`: Retorna a resposta completa consolidada com lista de fontes em JSON.
+    Aplica controles de segurança (ADR-0007):
+    - Autenticação opcional por API Key corporativa
+    - Rate Limiting por IP
+    - Sanitização de Prompt Injection
+    - Semáforo de concorrência anti-DoS
     """
+    # 1. Autenticação opcional
+    verificar_autenticacao_opcional(request)
+
+    # 2. Rate Limiting por IP
+    ip_cliente = extrair_ip_cliente(request)
+    permitido, tempo_espera = rate_limiter.verificar(ip_cliente)
+    if not permitido:
+        msg_limite = f"Limite de requisições excedido. Por favor, aguarde {tempo_espera} segundos."
+        if requisicao.stream:
+
+            def stream_limite():
+                yield f"data: {json.dumps({'type': 'error', 'message': msg_limite}, ensure_ascii=False)}\n\n"
+
+            return StreamingResponse(
+                stream_limite(),
+                media_type="text/event-stream",
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                headers={"Retry-After": str(tempo_espera)},
+            )
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=msg_limite,
+            headers={"Retry-After": str(tempo_espera)},
+        )
+
+    # 3. Sanitização contra Injeção de Prompt
+    seguro, motivo = validar_prompt_seguro(requisicao.question)
+    if not seguro:
+        msg_bloqueio = f"Consulta recusada: {motivo}"
+        if requisicao.stream:
+
+            def stream_bloqueio():
+                yield f"data: {json.dumps({'type': 'error', 'message': msg_bloqueio}, ensure_ascii=False)}\n\n"
+
+            return StreamingResponse(
+                stream_bloqueio(),
+                media_type="text/event-stream",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=msg_bloqueio,
+        )
+
+    # 4. Controle de Concorrência Anti-DoS
+    if not concurrency_limiter.tentar_adquirir():
+        msg_lotado = (
+            "O assistente atingiu a capacidade máxima de consultas simultâneas no momento. "
+            "Por favor, aguarde alguns instantes e tente novamente."
+        )
+        if requisicao.stream:
+
+            def stream_lotado():
+                yield f"data: {json.dumps({'type': 'error', 'message': msg_lotado}, ensure_ascii=False)}\n\n"
+
+            return StreamingResponse(
+                stream_lotado(),
+                media_type="text/event-stream",
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=msg_lotado,
+        )
+
+    # 5. Execução em Streaming
     if requisicao.stream:
         return StreamingResponse(
             gerar_stream_sse(
@@ -126,7 +205,7 @@ def consultar_chat(requisicao: ChatRequest):
             },
         )
 
-    # Modo síncrono
+    # 6. Modo síncrono
     try:
         url_ollama = obter_url_ollama()
         if not verificar_conexao_ollama(url_ollama):
@@ -154,3 +233,5 @@ def consultar_chat(requisicao: ChatRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Falha no processamento da consulta: {exc}",
         ) from exc
+    finally:
+        concurrency_limiter.liberar()

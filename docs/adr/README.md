@@ -27,6 +27,7 @@ Este diretório contém os **Architecture Decision Records (ADRs)** que formaliz
 | [ADR-0004](0004-persistencia-faiss.md) | Persistência Controlada do Índice FAISS | **Aprovada** | Implementa persistência local com manifesto `manifest.json`, fronteira de confiança para `pickle` e estratégia segura de substituição em Linux. |
 | [ADR-0005](0005-dependencias-e-compatibilidade.md) | Governança de Dependências e Compatibilidade | **Aprovada** | Define execução nativa em `.venv` como principal, fixa matriz candidata com `streamlit>=1.59.0` e condiciona remoção de `langchain-openai`. |
 | [ADR-0006](0006-desacoplamento-api-frontend.md) | Desacoplamento do Backend via API REST/SSE e Frontend Intranet | **Aprovada** | Introduz camada de API FastAPI com streaming SSE e frontend corporativo desacoplado para usuários leigos e integração por terceiros. |
+| [ADR-0007](0007-blindagem-seguranca-api.md) | Blindagem de Segurança da API e Controle de Concorrência | **Aprovada** | Implementa semáforo de concorrência anti-DoS, rate limiting por IP, sanitização contra prompt injection e security headers. |
 
 ---
 
@@ -42,6 +43,7 @@ flowchart TD
     ADR0004["ADR-0004: Persistência FAISS<br/>(Índice Local + Manifesto JSON)"]
     ADR0003["ADR-0003: Formatação LCEL<br/>(Limpeza do Contexto para Prompt)"]
     ADR0006["ADR-0006: Desacoplamento API & Frontend<br/>(FastAPI REST/SSE + Frontend Intranet & Widget)"]
+    ADR0007["ADR-0007: Blindagem de Segurança<br/>(Anti-DoS, Rate Limit, Guardrails & Headers)"]
 
     ADR0005 --> ADR0001
     ADR0005 --> ADR0004
@@ -50,6 +52,7 @@ flowchart TD
     ADR0002 -->|Define modelo de chat| ADR0003
     ADR0004 -->|Fornece trechos recuperados| ADR0003
     ADR0003 -->|Alimenta pipeline RAG| ADR0006
+    ADR0006 -->|Protegido por| ADR0007
 ```
 
 - **ADR-0001** define a URL resolvida de forma determinística, utilizada pela **ADR-0002** para consultar a API de tags.

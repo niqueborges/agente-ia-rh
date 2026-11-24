@@ -6,7 +6,7 @@
 [![LangChain](https://img.shields.io/badge/LangChain-LCEL%200.3%2B-green.svg)](https://www.langchain.com/)
 [![FAISS](https://img.shields.io/badge/FAISS-Persistent%20Store-orange.svg)](https://github.com/facebookresearch/faiss)
 [![Ollama](https://img.shields.io/badge/Ollama-Local%20LLM-black.svg)](https://ollama.com/)
-[![Tests](https://img.shields.io/badge/Tests-47%20passed-brightgreen.svg)](../tests/)
+[![Tests](https://img.shields.io/badge/Tests-52%20passed-brightgreen.svg)](../tests/)
 
 Este documento reúne os detalhes técnicos de engenharia de software, arquitetura de pipeline RAG, decisões formais de design (ADRs), governança de dependências e métricas de qualidade do projeto **agente-ia-rh**.
 
@@ -124,6 +124,7 @@ Todas as decisões arquiteturais estruturantes do projeto foram formalmente apro
 | **ADR-0004** | Persistência Controlada do Índice FAISS | Persistência atômica com `manifest.json`, sincronização `fsync`, travas de arquivo `fcntl` (`LOCK_EX`/`LOCK_SH`) e rotina não destrutiva de startup recovery com quarentena. | [ADR-0004](adr/0004-persistencia-faiss.md) |
 | **ADR-0005** | Governança de Dependências e Compatibilidade | Definição de execução nativa sob Python 3.14 como prioritária, expurgo da dependência órfã `langchain-openai` e fixação de versões estáveis (`faiss-cpu>=1.16.0`, `streamlit>=1.59.0`). | [ADR-0005](adr/0005-dependencias-e-compatibilidade.md) |
 | **ADR-0006** | Desacoplamento do Backend via API REST/SSE e Frontend Intranet | Camada de serviços HTTP/SSE independente com FastAPI (`api/`), frontend estático agnóstico sem build step e Web Component embutível (`<assistente-rh-chat>`). | [ADR-0006](adr/0006-desacoplamento-api-frontend.md) |
+| **ADR-0007** | Blindagem de Segurança da API e Controle de Concorrência | Semáforo de concorrência anti-DoS na CPU (máx 2 inferências), Rate Limiting por IP (10 req/min), guardrail contra prompt injection, CORS restrito e security headers. | [ADR-0007](adr/0007-blindagem-seguranca-api.md) |
 
 ---
 
@@ -135,6 +136,7 @@ agente-ia-rh/
 │   ├── __init__.py             # Exportação da aplicação FastAPI
 │   ├── main.py                 # Inicialização, CORS corporativo e rotas estáticas
 │   ├── schemas.py              # Modelos Pydantic de requisição e resposta
+│   ├── security.py             # Blindagem: Rate Limiting, semáforo e guardrails (ADR-0007)
 │   └── routes/                 # Roteadores modulares
 │       ├── chat.py             # Endpoint /api/v1/chat (Streaming SSE e Síncrono)
 │       ├── health.py           # Endpoint /api/v1/health (Diagnóstico Ollama e FAISS)
@@ -266,7 +268,7 @@ Para reproduzir o benchmark e inspecionar a metodologia completa, consulte o [Re
 
 ## 🧪 Testes Automatizados e Qualidade de Código
 
-A suíte de testes unitários e de integração conta com **47 testes automatizados** cobrindo todas as camadas arquiteturais:
+A suíte de testes unitários e de integração conta com **52 testes automatizados** cobrindo todas as camadas arquiteturais:
 
 ```bash
 # Execução da suíte completa

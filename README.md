@@ -111,7 +111,7 @@ Se a sua empresa já possui uma intranet pronta (SharePoint, WordPress, portal i
 Para desenvolvedores, engenheiros de IA e equipes de arquitetura de TI que desejam inspecionar o código-fonte, pipeline RAG ou reproduzir testes automatizados:
 
 - 📖 **[Manual Técnico e de Arquitetura (docs/README.md)](docs/README.md):** Diagramas detalhados do pipeline LCEL, fluxo de vetorização FAISS, contratos de streaming Server-Sent Events (SSE) e governança de dependências.
-- ⚖️ **[Decisões de Arquitetura — ADRs (docs/adr/)](docs/adr/README.md):** Registro das 6 decisões estruturantes (conectividade Ollama, separação de modelos, formatação pura LCEL, persistência atômica, dependências e desacoplamento de frontend).
+- ⚖️ **[Decisões de Arquitetura — ADRs (docs/adr/)](docs/adr/README.md):** Registro das 7 decisões estruturantes (conectividade Ollama, separação de modelos, formatação pura LCEL, persistência atômica, dependências, desacoplamento de frontend e blindagem de segurança).
 - 🔬 **[Benchmark e Avaliação de Qualidade (docs/avaliacao-qualidade-etapa3.md)](docs/avaliacao-qualidade-etapa3.md):** Avaliação de recuperação documental (*91.7% Context Hit Rate*) e fidelidade contra o conjunto de perguntas de referência (*Golden Dataset*).
-- 🧪 **[Suíte de Testes Automatizados (tests/)](tests/):** 47 testes unitários e de integração com `pytest` cobrindo cliente, chain, persistência e endpoints REST/SSE.
+- 🧪 **[Suíte de Testes Automatizados (tests/)](tests/):** 52 testes unitários e de integração com `pytest` cobrindo cliente, chain, persistência, endpoints REST/SSE e blindagem de segurança.
 - 📋 **[Histórico de Versões e Mudanças (CHANGELOG.md)](CHANGELOG.md):** Registro detalhado das melhorias por versão segundo o padrão Keep a Changelog.
