@@ -1,372 +1,117 @@
-# 💼 Assistente de RH com IA (RAG Local) — V2
+# 💼 Assistente Virtual de RH — Políticas Internas
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B%20%7C%203.14-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688.svg)](https://fastapi.tiangolo.com/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.59%2B-red.svg)](https://streamlit.io/)
-[![LangChain](https://img.shields.io/badge/LangChain-LCEL%200.3%2B-green.svg)](https://www.langchain.com/)
-[![FAISS](https://img.shields.io/badge/FAISS-Persistent%20Store-orange.svg)](https://github.com/facebookresearch/faiss)
-[![Ollama](https://img.shields.io/badge/Ollama-Local%20LLM-black.svg)](https://ollama.com/)
-[![Tests](https://img.shields.io/badge/Tests-47%20passed-brightgreen.svg)](tests/)
+O **Assistente Virtual de RH** é uma solução inteligente desenvolvida para esclarecer dúvidas de colaboradores sobre as diretrizes, benefícios e normas da empresa (como férias, atestados, jornada de trabalho, home office e conduta), consultando diretamente o regulamento oficial interno.
 
-Assistente inteligente de Recursos Humanos para consulta de políticas internas corporativas (férias, benefícios, jornada de trabalho e conduta), desenvolvido com a arquitetura **RAG (Retrieval-Augmented Generation)**.
-
-A aplicação opera **100% localmente e com privacidade estrita** através do Ollama no host nativo, evitando o tráfego de dados confidenciais ou documentos corporativos para APIs externas de IA.
+> 🔒 **100% Privado e Seguro:** Todo o processamento funciona dentro do ambiente da empresa, sem enviar perguntas, documentos ou dados confidenciais para servidores externos na internet.
 
 ---
 
-## 📖 Evolução do Projeto: Da PoC (V1) à Versão Estabilizada (V2)
+## 🧭 Como Este Manual Está Organizado
 
-O projeto passou por um ciclo contínuo de refatoração, governança de arquitetura e engenharia de produção:
+Escolha a seção adequada para o seu perfil:
 
-```text
-OpenAI (PoC inicial com gpt-4o-mini + text-embedding-3-small)
-  │
-  ▼
-Dependência e esgotamento de cota de API externa
-  │
-  ▼
-Migração para IA Local (Ollama: nomic-embed-text + Mistral/Qwen)
-  │
-  ▼
-Ambiente Híbrido de Desenvolvimento (Windows Host + WSL2 Ubuntu)
-  │
-  ▼
-Migração para Ubuntu 26.04 Nativo (CPU i7 + Ollama via systemd)
-  │
-  ▼
-Governança Arquitetural Formal via ADRs (docs/adr/ ADR-0001 a ADR-0006)
-  │
-  ▼
-Conectividade Determinística & Healthcheck Semântico (ADR-0001)
-  │
-  ▼
-Catálogo Dinâmico & Separação de Modelos (ADR-0002)
-  │
-  ▼
-Formatação Estrita de Contexto LCEL sem Vazamento de Classes (ADR-0003)
-  │
-  ▼
-Persistência FAISS Atômica, Manifesto JSON & Startup Recovery (ADR-0004)
-  │
-  ▼
-Governança de Dependências sob Python 3.14 & Suíte Automatizada (ADR-0005)
-  │
-  ▼
-Desacoplamento via API REST/SSE e Frontend Intranet & Widget (ADR-0006)
-```
-
-1. **Prova de Conceito Inicial (OpenAI):** O protótipo inicial utilizava APIs externas da OpenAI (`text-embedding-3-small` e `gpt-4o-mini`) em um único arquivo de script.
-2. **Transição para IA Local (Ollama na V1):** O pipeline foi adaptado para modelos locais sob Ollama, operando inicialmente em topologia híbrida Windows + WSL2.
-3. **Estabilização e Engenharia de Produção (V2):**
-   - Transição definitiva para **Ubuntu 26.04 nativo** com serviço systemd do Ollama.
-   - Formalização de 6 decisões de arquitetura em [docs/adr/](docs/adr/README.md).
-   - Eliminação de subprocessos de rede (`ip route`) substituídos por resolução determinística e healthcheck semântico em `GET /api/version` (ADR-0001).
-   - Consulta dinâmica de modelos de chat via `/api/tags`, isolando o modelo de embeddings (`nomic-embed-text:latest`) e modelos de código puro (ADR-0002).
-   - Formatação pura de texto do contexto na chain LCEL, impedindo o vazamento de sintaxe de classes Python para o modelo (ADR-0003).
-   - Persistência vetorial em disco com `manifest.json`, sincronização atômica (`fsync`), travas `fcntl` e recuperação de inicialização com quarentena técnica (ADR-0004).
-   - Governança estrita de dependências sob Python 3.14 (ADR-0005).
-   - Desacoplamento da camada RAG com API REST/SSE via FastAPI e frontend independente focado em colaboradores leigos e integração por terceiros via Web Component (ADR-0006).
-   - Suíte de 47 testes automatizados com `pytest` cobrindo cliente, chain, persistência, API e interface.
+- [👥 Parte 1 — Guia do Colaborador (Para Leigos)](#guia-colaborador): Como fazer perguntas, usar sugestões rápidas e conferir informações no dia a dia.
+- [💼 Parte 2 — Guia do Administrador e RH (Para Gestores e TI)](#guia-administrador): Como colocar o sistema no ar, atualizar manuais e integrar à intranet da empresa.
+- [🛠️ Documentação Técnica e de Engenharia](#documentacao-tecnica): Detalhes de arquitetura, código e infraestrutura para desenvolvedores e equipe de TI.
 
 ---
 
-## 🏛️ Arquitetura do Pipeline RAG (V2)
+<a id="guia-colaborador"></a>
+## 👥 Parte 1 — Guia do Colaborador (Para Leigos)
 
-```mermaid
-flowchart TD
-    subgraph Ingestao["1. Ingestão e Persistência Vetorial (ADR-0004)"]
-        PDF["📄 Documento de Políticas (PDF)"] --> Splitter["✂️ RecursiveCharacterTextSplitter<br/>(chunk: 1000, overlap: 200)"]
-        Splitter --> Chunks["📦 Fatias Textuais (45 chunks)"]
-        Chunks --> Embeddings["🧠 nomic-embed-text:latest<br/>(Vetor de 768 dimensões)"]
-        Embeddings --> Persist["💾 Escrita Atômica + fsync<br/>(manifest.json + fcntl LOCK_EX)"]
-        Persist --> FAISS_Disk[("🗄️ data/faiss_index/<br/>(index.faiss + index.pkl + manifest.json)")]
-    end
+Esta parte foi feita para qualquer colaborador da empresa que precisa consultar regras ou tirar dúvidas de RH sem complicações.
 
-    subgraph Consulta["2. Consulta e Recuperação RAG"]
-        User(["👤 Colaborador"]) -->|Digita Pergunta| UI["💻 Interface Streamlit (app.py)"]
-        UI -->|Carregamento em 38ms| MemFAISS["⚡ FAISS em Memória (@st.cache_resource)"]
-        MemFAISS --> Retriever["🔍 FAISS Retriever (k=3)"]
-        Retriever --> RawDocs["📑 Sequence de Documents"]
-    end
+### 1. O Que o Assistente Faz Por Você?
+Em vez de procurar em manuais extensos de dezenas de páginas em PDF ou esperar dias por um retorno manual, você pode conversar com o assistente em linguagem comum e receber uma resposta resumida, clara e oficial em segundos.
 
-    subgraph Geracao["3. Formatação e Geração (ADR-0002 & ADR-0003)"]
-        RawDocs --> Formatter["🧹 formatar_documentos()<br/>(Texto Puro sem Metadados Crus)"]
-        Formatter --> Prompt["📝 ChatPromptTemplate (LCEL)"]
-        UI -.->|Pergunta| Prompt
-        Prompt --> LLM["🤖 ChatOllama<br/>(qwen3.5:4b / llama3.1:8b)"]
-        LLM -->|Streaming de Tokens| StreamOutput["⚡ st.write_stream"]
-        StreamOutput --> User
-        RawDocs -.->|Páginas e Trechos| SourcesExpander["📄 st.expander (Rastreabilidade)"]
-        SourcesExpander --> User
-    end
-```
+### 2. Como Acessar
+Abra o navegador no seu computador ou celular conectado à rede da empresa e acesse o endereço fornecido pelo time de RH/TI:
+👉 **`http://localhost:8000/`** (ou o endereço interno de intranet da sua organização).
 
----
+### 3. O Que Você Pode Perguntar?
+Você pode digitar qualquer dúvida sobre o cotidiano da empresa, como por exemplo:
+- *"Como funciona o período de férias e com quantos dias de antecedência devo solicitar?"*
+- *"Qual é o prazo para entregar meu atestado médico e quais são os requisitos?"*
+- *"Quais são as regras para o trabalho remoto ou modelo híbrido?"*
+- *"Como funciona o benefício do vale-refeição e o plano de saúde?"*
+- *"Como funciona a compensação de horas no banco de horas?"*
+- *"Como funciona a política de reembolso para cursos ou viagens a trabalho?"*
 
-## 🖥️ Topologia de Execução: Desenvolvimento vs Produção
+### 4. Usando as Sugestões Rápidas (Chips)
+Na parte inferior da tela, você encontrará botões com temas frequentes (🌴 **Férias**, 🏥 **Saúde e Atestados**, 🏠 **Trabalho Remoto**, 💳 **Benefícios**, ⏰ **Jornada e Ponto**). Basta clicar em um deles para fazer a pergunta instantaneamente!
 
-### Ambiente Principal de Desenvolvimento (Ubuntu 26.04 Nativo)
+### 5. Como Conferir a Resposta Oficial (Rastreabilidade)
+Abaixo de cada resposta, você verá o botão:
+> **📄 Trechos consultados no Manual de Políticas (Página X)**
 
-No ambiente de desenvolvimento e execução local, tanto o serviço do Ollama (gerenciado pelo `systemd`) quanto a aplicação Python (Streamlit em `.venv`) operam diretamente no host Linux, comunicando-se deterministicamente via loopback em `http://127.0.0.1:11434`:
+Ao clicar nele, você visualiza o trecho exato do regulamento da empresa utilizado para responder, com o número da página correspondente. Isso garante total transparência e segurança de que a resposta não é uma "opinião", mas sim a política real da empresa.
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│                   Host Ubuntu 26.04 LTS                     │
-│                                                             │
-│  Servidor Ollama (systemd) ───────► http://127.0.0.1:11434  │
-│                                              ▲              │
-│                                              │ (loopback)   │
-│  Streamlit App (.venv) ──────────────────────┘              │
-│     ├── app.py (Interface, Rastreabilidade & Config)        │
-│     └── rag/                                                │
-│          ├── ollama_client.py (URL & Catálogo Dinâmico)     │
-│          ├── ingest.py (FAISS Persistente + Manifesto)      │
-│          └── chain.py (LCEL + Formatação Estrita)           │
-└─────────────────────────────────────────────────────────────┘
-```
-
-> **Contexto Histórico (V1 sob Windows + WSL2):** No protótipo inicial, o Ollama executava no Windows Host e a aplicação no subsistema WSL2. O mecanismo legado de resolução de rota via comando shell `ip route` foi completamente removido na V2, substituído por resolução determinística via `OLLAMA_BASE_URL` ou `http://127.0.0.1:11434` conforme a [ADR-0001](docs/adr/0001-resolucao-conectividade-ollama.md).
-
-### Arquitetura Alvo em Produção Corporativa
-
-Para um ambiente corporativo expandido, a aplicação é isolada e protegida por camadas de segurança perimetral e identidade:
-
-```text
-[ Colaborador ]
-       │ (HTTPS / VPN Corporativa)
-       ▼
-[ Reverse Proxy / Ingress (Nginx / Traefik) ] ─── [ SSO / OIDC (Microsoft Entra / Okta) ]
-       │
-       ▼
-[ Container Streamlit (app.py + rag) ]
-       ├── [ Banco Vetorial (FAISS Persistente / PgVector) ]
-       └── [ Servidor de Inferência Dedicado (Ollama / vLLM com GPU corporativa) ]
-```
+### 6. E Se Minha Dúvida Não Estiver no Regulamento?
+Se você fizer uma pergunta sobre um assunto que não esteja previsto nas regras internas da empresa, o assistente responderá educadamente que **não encontrou essa informação no manual** e orientará você a procurar o time de Recursos Humanos. Ele nunca inventa respostas!
 
 ---
 
-## ⚖️ Decisões de Engenharia e Arquitetura (ADRs V2)
+<a id="guia-administrador"></a>
+## 💼 Parte 2 — Guia do Administrador e RH (Para Gestores e TI)
 
-| Decisão Técnica | Implementação na V2 | Justificativa / Impacto | Referência |
-| :--- | :--- | :--- | :--- |
-| **Resolução Determinística de Rede** | `obter_url_ollama()` sem subprocessos | Prioriza `OLLAMA_BASE_URL` com fallback estrito para `127.0.0.1:11434`. Valida portas (1-65535), IPv6 e rejeita query strings. | [ADR-0001](docs/adr/0001-resolucao-conectividade-ollama.md) |
-| **Healthcheck Semântico** | `verificar_conexao_ollama()` | Consulta `GET /api/version` validando status HTTP 200 e payload JSON contendo o atributo `"version"` não vazio. | [ADR-0001](docs/adr/0001-resolucao-conectividade-ollama.md) |
-| **Catálogo Dinâmico de Modelos** | `listar_modelos_chat()` via `/api/tags` | Detecta modelos instalados em tempo de execução, isolando modelos de embedding e filtrando modelos não conversacionais. | [ADR-0002](docs/adr/0002-catalogo-modelos-ollama.md) |
-| **Separação Embeddings vs Chat** | `nomic-embed-text:latest` fixado | A seleção ou troca de modelo de LLM na UI recria apenas o gerador, sem reprocessar embeddings ou reler documentos. | [ADR-0002](docs/adr/0002-catalogo-modelos-ollama.md) |
-| **Formatação Estrita LCEL** | `formatar_documentos()` | Função pura que extrai o texto dos chunks e concatena com quebra dupla, impedindo vazamento de objetos `Document` no prompt. | [ADR-0003](docs/adr/0003-formatacao-contexto-lcel.md) |
-| **Rastreabilidade de Fontes** | `st.expander` na UI | Exibe as páginas e trechos recuperados diretamente associados à pergunta atual na interface do colaborador. | [ADR-0003](docs/adr/0003-formatacao-contexto-lcel.md) |
-| **Persistência Atômica do Índice** | `salvar_indice_persistente()` | Gravação atômica em `.tmp`, `fsync` e substituição segura em `data/faiss_index/` sob trava exclusiva `fcntl.flock(LOCK_EX)`. | [ADR-0004](docs/adr/0004-persistencia-faiss.md) |
-| **Manifesto de Integridade** | `manifest.json` | Valida versão do esquema, hash SHA-256 do PDF, `chunking_config_hash`, dimensão vetorial (768) e total de chunks. | [ADR-0004](docs/adr/0004-persistencia-faiss.md) |
-| **Validação sem Embeddings** | `similarity_search_by_vector()` | Valida a integridade do índice FAISS com vetor sintético zerado, eliminando chamadas desnecessárias de rede ao Ollama. | [ADR-0004](docs/adr/0004-persistencia-faiss.md) |
-| **Startup Recovery e Quarentena** | `recuperar_na_inicializacao()` | Detecta índices corrompidos, restaura backups funcionais e isola falhas em pastas de quarentena com timestamp. | [ADR-0004](docs/adr/0004-persistencia-faiss.md) |
-| **Governança de Dependências** | Python 3.14 + `.venv` | Matriz limpa sem `langchain-openai`, `faiss-cpu>=1.16.0` compatível com ABI3 e dependências travadas. | [ADR-0005](docs/adr/0005-dependencias-e-compatibilidade.md) |
-| **Desacoplamento API & Frontend** | FastAPI REST/SSE + Frontend Intranet | Expõe endpoints headless para streaming em tempo real e entrega interface amigável para colaboradores leigos e widget para terceiros. | [ADR-0006](docs/adr/0006-desacoplamento-api-frontend.md) |
+Esta parte orienta gestores de RH e administradores de TI sobre como operar o sistema na rede da empresa, atualizar políticas e integrar a outras ferramentas.
 
-> 📖 **Documentação Arquitetural Completa:** Para consultar as motivações técnicas aprofundadas, alternativas descartadas e critérios de validação de cada decisão, veja o [Índice de ADRs (docs/adr/README.md)](docs/adr/README.md).
+### 1. Principais Benefícios para a Empresa
+- **Redução de Chamados Repetitivos:** Resolve dúvidas rotineiras de colaboradores instantaneamente.
+- **Padronização:** Garante que todos recebam exatamente a mesma orientação oficial baseada na política vigente.
+- **Conformidade com a LGPD:** Os dados dos funcionários e as diretrizes corporativas permanecem restritos à infraestrutura interna da empresa.
+- **Portabilidade Total:** O backend é desacoplado, permitindo que a empresa use a interface padrão ou desenvolva seu próprio portal.
 
----
+### 2. Como Iniciar o Assistente na Rede Interna
 
-## 📁 Estrutura Modular do Projeto
+#### Pré-requisitos Básicos
+- Servidor ou computador Linux/Windows com **Python** e o serviço gratuito **Ollama** instalado.
 
-```text
-agente-ia-rh/
-├── api/                        # Camada de serviços HTTP e streaming (FastAPI - ADR-0006)
-│   ├── __init__.py             # Exportação da aplicação FastAPI
-│   ├── main.py                 # Ponto de entrada, CORS corporativo e rotas estáticas
-│   ├── schemas.py              # Modelos Pydantic de requisição e resposta
-│   └── routes/                 # Roteadores modulares
-│       ├── chat.py             # Endpoint /api/v1/chat (Streaming SSE e Síncrono)
-│       ├── health.py           # Endpoint /api/v1/health (Diagnóstico Ollama e FAISS)
-│       └── faq.py              # Endpoint /api/v1/faq (Perguntas frequentes)
-├── frontend/                   # Frontend desacoplado para intranet e leigos (ADR-0006)
-│   ├── index.html              # Interface amigável para colaboradores (sem termos técnicos)
-│   ├── styles.css              # Estilos acessíveis e responsivos corporativos
-│   ├── app.js                  # Lógica do cliente com consumo de streaming SSE
-│   └── widget.js               # Web Component embutível (<assistente-rh-chat>)
-├── app.py                      # Console analítico e operacional interno (Streamlit)
-├── docs/                       # Documentação técnica e governança
-│   └── adr/                    # Architecture Decision Records (ADRs 0001 a 0006)
-├── rag/                        # Módulo central de RAG (Lógica de Negócio)
-│   ├── __init__.py             # Exportações públicas da biblioteca
-│   ├── ollama_client.py        # Conector Ollama, validação de URL e catálogo dinâmico
-│   ├── ingest.py               # Ingestão PDF, persistência FAISS, manifesto e locks
-│   └── chain.py                # Composição LCEL e formatação estrita de contexto
-├── tests/                      # Suíte de testes automatizados com pytest
-│   ├── __init__.py             # Pacote de testes
-│   ├── conftest.py             # Fixtures globais e configuração do PYTHONPATH
-│   ├── test_api.py             # Testes de integração da API REST/SSE (ADR-0006)
-│   ├── test_ollama_client.py   # Testes de URL, conectividade e catálogo (ADRs 0001, 0002)
-│   ├── test_chain.py           # Testes de formatação de contexto e LCEL (ADR-0003)
-│   ├── test_ingest.py          # Testes de manifesto, persistência e recovery (ADR-0004)
-│   └── test_app.py             # Testes de integração da interface Streamlit (AppTest)
-├── data/
-│   ├── politica_rh_exemplo.pdf # Documento sintético didático para demonstração
-│   └── faiss_index/            # Índice vetorial persistido localmente (ignorado no git)
-│       ├── index.faiss         # Estrutura de busca vetorial C++
-│       ├── index.pkl           # Catálogo de metadados e docstore Python
-│       └── manifest.json       # Manifesto de integridade e compatibilidade
-├── Dockerfile                  # Definição de container (Python 3.11-slim)
-├── docker-compose.yml          # Orquestração do serviço
-├── requirements.txt            # Dependências de produção governadas pela ADR-0005
-├── requirements-dev.txt        # Dependências de desenvolvimento e testes (pytest, ruff)
-├── .env.example                # Template documentado de variáveis de ambiente
-├── .gitignore                  # Exclusão de índices gerados, caches e segredos
-└── README.md                   # Documentação arquitetural e técnica do projeto
-```
-
----
-
-## 🚀 Como Executar
-
-### 1. Pré-requisitos
-- **Python 3.10+** (validado nativamente em Python 3.14 no Ubuntu 26.04)
-- **Ollama** instalado e em execução ([Download Ollama](https://ollama.com/download))
-
-Baixe os modelos recomendados no Ollama:
+#### Opção Principal: Portal da Intranet (Para Todos os Colaboradores)
+Inicia o servidor web leve com a interface amigável e a API de consultas:
 ```bash
-# Modelo de Embeddings (obrigatório para indexação FAISS)
-ollama pull nomic-embed-text
-
-# Modelos de Linguagem para Chat (baixe o padrão e/ou o alternativo)
-ollama pull qwen3.5:4b      # Modelo padrão recomendado (raciocínio leve e ágil na CPU)
-ollama pull llama3.1:8b     # Modelo alternativo para respostas mais densas
+uvicorn api.main:app --host 0.0.0.0 --port 8000
 ```
+- **Acesso do Funcionário:** [`http://localhost:8000/`](http://localhost:8000/) (Chat visual amigável com chips e streaming).
+- **Documentação da API:** [`http://localhost:8000/docs`](http://localhost:8000/docs) (Catálogo interativo para integrações).
 
----
-
-### Opção A: Portal da Intranet para Colaboradores (FastAPI + Frontend Desacoplado)
-
-Ideal para o público não técnico (equipe de RH, funcionários e colaboradores da intranet):
-
-1. **Inicie o servidor de aplicação FastAPI:**
-   ```bash
-   uvicorn api.main:app --host 0.0.0.0 --port 8000
-   ```
-
-2. **Acessos disponíveis:**
-   - **Interface Amigável do Colaborador:** [`http://localhost:8000/`](http://localhost:8000/)
-     - Layout acolhedor com balões, chips de dúvidas frequentes e streaming fluido via SSE.
-   - **Documentação Interativa da API (OpenAPI/Swagger):** [`http://localhost:8000/docs`](http://localhost:8000/docs)
-   - **Documentação Técnica Alternativa (ReDoc):** [`http://localhost:8000/redoc`](http://localhost:8000/redoc)
-
----
-
-### Opção B: Console Administrativo e Operacional (Streamlit)
-
-Voltado para a administradora do RH ou equipe de engenharia inspecionar os parâmetros do modelo, métricas de latência e botão de reindexação forçada:
-
+#### Opção Administrativa: Console de Gestão (Streamlit)
+Inicia o painel de monitoramento técnico e reindexação:
 ```bash
 streamlit run app.py
 ```
+- **Acesso da Gestão:** [`http://localhost:8501/`](http://localhost:8501/) (Visualização de latência, seleção de modelos e botão de reindexação).
 
-Acesse o console no navegador: [`http://localhost:8501`](http://localhost:8501).
+### 3. Como Atualizar as Políticas da Empresa
+Sempre que a diretoria ou o RH atualizar o manual interno:
+1. Substitua o arquivo PDF em: `data/politica_rh_exemplo.pdf` (ou no caminho configurado).
+2. O sistema reconhece a alteração automaticamente e atualiza o catálogo de busca inteligente sem necessidade de comandos complexos.
 
----
-
-### Opção C: Integração do Widget em Qualquer Intranet ou Portal de Terceiros
-
-Se outra empresa desejar plugar o assistente em seu próprio portal corporativo (WordPress, SharePoint, portal estático em HTML ou React), basta incluir as duas linhas abaixo em qualquer página web da intranet:
+### 4. Como Integrar em Outras Intranets ou Portais da Empresa (Widget)
+Se a sua empresa já possui uma intranet pronta (SharePoint, WordPress, portal interno em PHP, Java, React, etc.), qualquer desenvolvedor pode incluir o chat flutuante adicionando apenas **duas linhas de código HTML**:
 
 ```html
-<!-- 1. Importa o script do Web Component -->
+<!-- 1. Carrega o componente do assistente -->
 <script src="http://servidor-rh:8000/widget.js" defer></script>
 
-<!-- 2. Adiciona o botão flutuante e janela de chat -->
+<!-- 2. Adiciona o botão de chat no rodapé da página -->
 <assistente-rh-chat api-url="http://servidor-rh:8000/api/v1"></assistente-rh-chat>
 ```
 
----
-
-### Opção D: Execução via Docker Compose
-
-Caso prefira executar a aplicação em container:
-
-```bash
-docker compose up --build
-```
+### 5. Como Monitorar a Saúde do Sistema
+- Na interface do colaborador, há um indicador visual no cabeçalho (*Online* 🟢 ou *Degradado* 🟡).
+- Para monitoramento automatizado de TI, consulte o endereço:
+  `GET http://localhost:8000/api/v1/health`
 
 ---
 
-## 🧪 Executando os Testes e o Benchmark de Qualidade
+<a id="documentacao-tecnica"></a>
+## 🛠️ Documentação Técnica e de Engenharia
 
-### 1. Suíte de Testes Automatizados (pytest)
+Para desenvolvedores, engenheiros de IA e equipes de arquitetura de TI que desejam inspecionar o código-fonte, pipeline RAG ou reproduzir testes automatizados:
 
-O projeto conta com uma suíte de **47 testes unitários e de integração** cobrindo todas as camadas arquiteturais (cliente Ollama, chain LCEL, persistência FAISS, API REST/SSE e interfaces):
-
-```bash
-# Instale as dependências de desenvolvimento
-pip install -r requirements-dev.txt
-
-# Execute a suíte de testes completa
-pytest tests/ -v
-```
-
-Exemplo de saída esperada:
-```text
-tests/test_api.py::test_endpoint_health PASSED
-tests/test_api.py::test_endpoint_faq PASSED
-tests/test_api.py::test_servir_arquivos_estaticos PASSED
-tests/test_api.py::test_chat_modo_sincrono PASSED
-tests/test_api.py::test_chat_modo_streaming_sse PASSED
-tests/test_app.py::TestAppStreamlit::test_app_inicializa_sem_excecoes PASSED
-tests/test_chain.py::TestFormatacaoDocumentos::test_formata_lista_de_documentos_com_sucesso PASSED
-tests/test_ingest.py::TestPersistenciaEStartupRecovery::test_salvar_indice_persistente_cria_manifesto_e_arquivos PASSED
-tests/test_ollama_client.py::TestValidacaoUrlOllama::test_url_sem_esquema_adiciona_http PASSED
-...
-======================= 47 passed in 2.47s =======================
-```
-
-### 2. Benchmark Sistemático de Qualidade (Etapa 3)
-
-Para reproduzir a avaliação comparativa de recuperação, fidelidade e latência na CPU entre os modelos:
-
-```bash
-python scripts/avaliar_rag.py
-```
-
-Os resultados detalhados são salvos em `data/benchmarks/resultado_benchmark.json` e documentados em [`docs/avaliacao-qualidade-etapa3.md`](docs/avaliacao-qualidade-etapa3.md).
-
----
-
-## 🔒 Nota de Confidencialidade e Dados Fictícios
-
-> [!NOTE]
-> O arquivo [`data/politica_rh_exemplo.pdf`](data/politica_rh_exemplo.pdf) incluído neste repositório contém **dados e regras fictícias da empresa Nexus Tecnologia S.A.**, gerado exclusivamente para fins didáticos e demonstração do pipeline RAG, em estrita conformidade com as diretrizes de privacidade e LGPD.
-
----
-
-## 📌 Status das Fases e Próximas Fronteiras de Evolução
-
-Com a conclusão da estabilização da V2 e da avaliação empírica da Etapa 3, o status atual do projeto é:
-
-### Entregas Concluídas (V2 + Etapa 3)
-- [x] **Conectividade Determinística e Resiliente:** Resolução e healthcheck sem dependência de comandos de shell externos ([ADR-0001](docs/adr/0001-resolucao-conectividade-ollama.md)).
-- [x] **Catálogo Dinâmico e Descoberta de Modelos:** Detecção de modelos no Ollama com separação entre geração e embeddings ([ADR-0002](docs/adr/0002-catalogo-modelos-ollama.md)).
-- [x] **Higiene do Prompt LCEL:** Formatação pura de contexto sem vazamento de objetos `Document` ([ADR-0003](docs/adr/0003-formatacao-contexto-lcel.md)).
-- [x] **Rastreabilidade de Fontes:** Exibição expansível na UI dos trechos e páginas consultadas ([ADR-0003](docs/adr/0003-formatacao-contexto-lcel.md)).
-- [x] **Persistência Atômica do Banco Vetorial:** Armazenamento em disco com `manifest.json`, sincronização `fsync`, travas `fcntl` e tolerância a falhas ([ADR-0004](docs/adr/0004-persistencia-faiss.md)).
-- [x] **Governança de Dependências:** Homologação sob Python 3.14 com 47 testes automatizados ([ADR-0005](docs/adr/0005-dependencias-e-compatibilidade.md)).
-- [x] **Desacoplamento de API e Frontend Intranet:** Camada REST/SSE em FastAPI, interface estática sem jargões para usuários leigos e Web Component embutível para terceiros ([ADR-0006](docs/adr/0006-desacoplamento-api-frontend.md)).
-- [x] **Pipeline de CI/CD (GitHub Actions):** Automação de linting (Ruff) e testes (`pytest`) a cada push e pull request (`.github/workflows/ci.yml`).
-- [x] **Curadoria do Golden Dataset:** 15 perguntas de referência cobrindo os 10 capítulos do manual e controles negativos ([data/golden_dataset.json](data/golden_dataset.json)).
-- [x] **Avaliação de Recuperação:** *Context Hit Rate @ 3* atingiu **91.7%**, comprovando alta eficácia da recuperação densa pura.
-- [x] **Benchmark Empírico de Modelos:** Comparação de latência, vazão e fidelidade na CPU entre `qwen3.5:4b` e `llama3.1:8b`, elegendo `llama3.1:8b` (`num_ctx=2048`) como padrão recomendado ([docs/avaliacao-qualidade-etapa3.md](docs/avaliacao-qualidade-etapa3.md)).
-
-### Próximas Fronteiras de Evolução (Trabalhos Futuros Opcionais)
-- [ ] **Multi-Documentos e Segmentação por Metadados:** Suporte à ingestão simultânea de manuais de diferentes departamentos (RH, TI, Financeiro, Jurídico) com filtros por coleção.
-- [ ] **Autenticação Corporativa (SSO / OIDC):** Integração com Microsoft Entra ID / Okta para controle de acesso por perfil (RBAC).
-- [ ] **Banco Vetorial Gerenciado:** Avaliação de migração do FAISS para PgVector ou Qdrant caso o acervo documental ultrapasse centenas de arquivos.
-
----
-
-## 🎯 Síntese
-
-O **agente-ia-rh** evoluiu de uma prova de conceito inicial para uma arquitetura local robusta, modular e totalmente auditável. Com governança via ADRs, persistência atômica, testes automatizados e inferência 100% privada, o projeto serve como referência prática de aplicação de IA generativa em ambientes corporativos sensíveis.
-
----
-
-## 📚 Referências e Créditos
-
-Este projeto teve como ponto de partida o tutorial e materiais disponibilizados no YouTube:
-- **Vídeo de Referência:** [Assistente RAG com Streamlit e LangChain](https://www.youtube.com/watch?v=XqG3RN6VzDw)
-- **Agradecimentos:** Aos autores do conteúdo original que serviu como ponto de partida exploratório, a partir do qual o projeto foi integralmente reestruturado com execução nativa local (Ollama), arquitetura modular em pacotes, governança de dependências, persistência atômica FAISS e suíte de testes automatizados.
+- 📖 **[Manual Técnico e de Arquitetura (docs/README.md)](docs/README.md):** Diagramas detalhados do pipeline LCEL, fluxo de vetorização FAISS, contratos de streaming Server-Sent Events (SSE) e governança de dependências.
+- ⚖️ **[Decisões de Arquitetura — ADRs (docs/adr/)](docs/adr/README.md):** Registro das 6 decisões estruturantes (conectividade Ollama, separação de modelos, formatação pura LCEL, persistência atômica, dependências e desacoplamento de frontend).
+- 🔬 **[Benchmark e Avaliação de Qualidade (docs/avaliacao-qualidade-etapa3.md)](docs/avaliacao-qualidade-etapa3.md):** Avaliação de recuperação documental (*91.7% Context Hit Rate*) e fidelidade contra o conjunto de perguntas de referência (*Golden Dataset*).
+- 🧪 **[Suíte de Testes Automatizados (tests/)](tests/):** 47 testes unitários e de integração com `pytest` cobrindo cliente, chain, persistência e endpoints REST/SSE.
+- 📋 **[Histórico de Versões e Mudanças (CHANGELOG.md)](CHANGELOG.md):** Registro detalhado das melhorias por versão segundo o padrão Keep a Changelog.
