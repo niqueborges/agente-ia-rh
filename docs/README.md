@@ -170,7 +170,7 @@ agente-ia-rh/
 ├── docs/                       # Documentação técnica e governança
 │   ├── README.md               # Este arquivo (Manual Técnico e de Engenharia)
 │   ├── avaliacao-qualidade-etapa3.md # Relatório técnico do benchmark empírico
-│   └── adr/                    # Architecture Decision Records (ADRs 0001 a 0006)
+│   └── adr/                    # Architecture Decision Records (ADRs 0001 a 0007)
 ├── scripts/
 │   └── avaliar_rag.py          # Script de execução do benchmark automatizado
 ├── Dockerfile                  # Definição de container (Python 3.11-slim)
@@ -250,6 +250,32 @@ Retorna as perguntas sugeridas pré-configuradas para o catálogo da interface:
   ]
 }
 ```
+
+---
+
+## 🛡️ Arquitetura de Segurança e Defesa em Profundidade (ADR-0007)
+
+A camada de segurança da API implementa a premissa de *Zero Trust* corporativo através do módulo [`api/security.py`](../api/security.py):
+
+```mermaid
+flowchart LR
+    Req["🌐 Requisição HTTP/SSE"] --> SecHeaders["1. Security Headers<br/>(nosniff, SAMEORIGIN, XSS)"]
+    SecHeaders --> CORS["2. CORS Restrito<br/>(ALLOWED_ORIGINS)"]
+    CORS --> Auth["3. Autenticação Opcional<br/>(API_KEY / X-API-Key)"]
+    Auth --> RateLimit["4. Rate Limiting<br/>(10 req/min por IP)"]
+    RateLimit --> Guardrail["5. Prompt Guardrail<br/>(Anti-Injection / Jailbreak)"]
+    Guardrail --> Concurrency["6. Concurrency Limiter<br/>(Máx 2 LLMs na CPU)"]
+    Concurrency --> LCELCore["🧠 Pipeline RAG / LCEL"]
+```
+
+### Controles Defensivos Implementados:
+1. **Controle de Concorrência Anti-DoS (`ConcurrencyLimiter`):** Semáforo estrito limitando a no máximo 2 inferências paralelas de LLM na CPU. Requisições excedentes recebem HTTP 429 ou aviso SSE imediato, prevenindo starvation e congelamento do host.
+2. **Rate Limiting em Memória (`RateLimiter`):** Janela deslizante leve por IP (máximo de 10 requisições/minuto no `/chat`), retornando HTTP 429 com cabeçalho `Retry-After`.
+3. **Guardrail contra Prompt Injection (`validar_prompt_seguro`):** Regex compilados inspecionam a pergunta contra comandos adversariais (*"ignore instructions"*, *"esqueça regras"*, *"system prompt"*, *"jailbreak"*, *"dan mode"*), rejeitando com HTTP 400 antes de acionar o modelo.
+4. **Cabeçalhos de Segurança HTTP (OWASP):** Injeção automática em todas as respostas de `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `X-XSS-Protection: 1; mode=block` e `Referrer-Policy: strict-origin-when-cross-origin`.
+5. **CORS Controlado:** Origens permitidas restritas via variável `ALLOWED_ORIGINS` (padrão seguro para `localhost` e `127.0.0.1` nas portas `8000` e `8501`), eliminando wildcards vulneráveis.
+6. **Controle de Swagger UI (`ENABLE_DOCS`):** Rotas `/docs`, `/redoc` e `/openapi.json` desativadas automaticamente em ambientes `ENV=production`.
+7. **Autenticação Opcional por API Key (`API_KEY`):** Quando configurada no ambiente corporativo, valida o cabeçalho `X-API-Key` retornando HTTP 401 para requisições não autorizadas.
 
 ---
 
