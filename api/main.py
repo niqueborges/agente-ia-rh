@@ -8,7 +8,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from .routes import chat, faq, health
@@ -57,6 +57,19 @@ def servir_widget():
     if arquivo_widget.exists():
         return FileResponse(arquivo_widget, media_type="application/javascript")
     return {"message": "Widget não encontrado."}
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def servir_favicon():
+    """Retorna ícone emoji 💼 em SVG para evitar erro 404 de favicon no navegador."""
+    svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">💼</text></svg>'
+    return Response(content=svg, media_type="image/svg+xml")
+
+
+@app.get("/sw.js", include_in_schema=False)
+def servir_service_worker():
+    """Responde a requisições residuais de Service Worker da porta 8000 para evitar 404."""
+    return Response(content="", media_type="application/javascript")
 
 
 # Servir arquivos estáticos do frontend (CSS, JS, widgets) caso o diretório exista

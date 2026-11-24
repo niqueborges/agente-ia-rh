@@ -50,6 +50,13 @@ def test_servir_arquivos_estaticos():
     assert resp_widget.status_code == 200
     assert "assistente-rh-chat" in resp_widget.text
 
+    resp_favicon = client.get("/favicon.ico")
+    assert resp_favicon.status_code == 200
+    assert "image/svg+xml" in resp_favicon.headers["content-type"]
+
+    resp_sw = client.get("/sw.js")
+    assert resp_sw.status_code == 200
+
     resp_css = client.get("/static/styles.css")
     assert resp_css.status_code == 200
     assert "--primary" in resp_css.text
